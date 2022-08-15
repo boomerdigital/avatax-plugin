@@ -53,12 +53,13 @@ jQuery(document).ready(function($){
                 }
             });
     });   
-    jQuery("#ac").blur(function(){
+    jQuery("#lic").blur(function(){
        var accountId = jQuery('#ac').val();
+       var licenseKey = jQuery('#lic').val();
             jQuery.ajax({
                 type: "POST",
                 url: admin_ajax_url.ajax_url,
-                data: { action: 'verifyAccount',"accountId":accountId},
+                data: { action: 'verifyAccount',"accountId":accountId,"licenseKey":licenseKey},	
                 success: function(msg){
                     $('.errormessage').remove();
                     $('#ac').after(msg);

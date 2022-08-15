@@ -8,6 +8,7 @@ jQuery(document).ready(function(){
         data: formData,
         success: function(msg){
             var options = "<option value='0'>All Locations</option>";
+           
             if (msg != null){
                 var loc = JSON.parse(msg);
                 for(var i = 0; i<loc.value.length; i++){
@@ -30,7 +31,7 @@ function getAllCountries(){
         data: {action: "getCountriesList"},
         success: function(msg){
             var loc = JSON.parse(msg);
-            var options = "<option value='0'>All Locations</option>";
+            var options = "<option value='0'>All Locations</option>";            
             if (loc.all.length > 0){
                 for(var i = 0; i<loc.all.length; i++){
                     if(jQuery.inArray(loc.all[i].code,loc.saved) != -1){

@@ -4,7 +4,21 @@ class FrontEndApi{
 
     public static function curl($url, $method = "GET" ,$data = array()){
         $curl = curl_init();
-        $header = self::getHeader();
+        
+        if(isset($data['apiKey'])){
+           
+            $header= array('Content-type: application/json',
+            'Authorization: Basic '.$data['apiKey']);
+           
+        
+        }else{
+            $header= array('Content-type: application/json',
+            'Authorization: Basic '.base64_encode(ACCOUNTNUMBER.':'.LICENSEKEY));
+           
+        }
+        
+
+        //$header = self::getHeader();
         curl_setopt($curl, CURLOPT_URL, AVATAXENDPOINT.$url);
         curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
@@ -32,8 +46,9 @@ class FrontEndApi{
     }
 
     public static function getHeader(){
+        
         return array('Content-type: application/json',
-                              'Authorization: Basic MjAwMDgwMzgwOTo4RTNCQzhDQ0JGRTg0QzU5');
+                              'Authorization: Basic MjAwMDAwMzEwODozMTgyQTc2M0I0NTVFNDA2');
 
     }
 }

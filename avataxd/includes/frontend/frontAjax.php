@@ -16,8 +16,8 @@ class FrontAjax{
 
         add_action("wp_head" , array(&$this,'setAdminAjax'));
 
-        //add_action("wp_ajax_commitTransactions" , array(&$this,'commitTransactions'));
-        //add_action("wp_ajax_nopriv_commitTransactions" , array(&$this,'commitTransactions'));
+        add_action("wp_ajax_commitTransactions" , array(&$this,'commitTransactions'));
+        add_action("wp_ajax_nopriv_commitTransactions" , array(&$this,'commitTransactions'));
 
     }
     public function locations(){
@@ -37,7 +37,13 @@ class FrontAjax{
             $data =  json_encode($_POST);
             $country=$_POST['country'];
             $supported_countries = get_option('supported_countries');
-            if(in_array($country,$supported_countries)){
+            
+            
+            
+            if(in_array($country,$supported_countries) or in_array(0,$supported_countries)){
+                $response = Api::curl("api/v2/addresses/validate", "POST", $data);
+                ErrorLog::sysLogs("Validate address".$response);
+                echo $response;
             $response = Api::curl("api/v2/addresses/resolve",'POST', $data);
             ErrorLog::sysLogs("validate Address".$response);
             $result =  json_decode($response);

@@ -37,9 +37,15 @@ class Ajax{
     }
 
     public function verifyAccount(){
+        $data=array();
         $accountId = $_POST['accountId'];
+        $key = $_POST['licenseKey'];    
+        $data['apiKey']=base64_encode($accountId.":".$key);
+        
+      
             try{
-            $response = Api::curl("api/v2/accounts/".$accountId);
+            $response = Api::curl("api/v2/accounts/".$accountId,"GET",$data);
+        
             $response = json_decode($response, TRUE);
             ErrorLog::sysLogs("Account verify successfully Account No=".$accountId);
             if(isset($response['error'])){
