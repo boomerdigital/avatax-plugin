@@ -13,6 +13,7 @@ class Api{
         
         }else{
             $header= array('Content-type: application/json',
+            'Authorization: Basic '.base64_encode(ACCOUNTNUMBER.':'.LICENSEKEY));
            
         }
         
