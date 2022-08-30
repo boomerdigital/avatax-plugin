@@ -19,7 +19,7 @@
   }
 add_action('woocommerce_before_checkout_form', 'addressValidation', 5);
 function addressValidation() {
-    $ADDRESSVALIDATION = ADDRESSVALIDATION;
+      $ADDRESSVALIDATION = ADDRESSVALIDATION;
  	echo "<div class='add-error'></div>";
     echo "<input type='hidden' name='address-validate' id='address-validate' value=".$ADDRESSVALIDATION.">";      
 }

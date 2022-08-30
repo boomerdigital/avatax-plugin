@@ -30,8 +30,13 @@ function getAllCountries(){
         url: admin_ajax_url.ajax_url,
         data: {action: "getCountriesList"},
         success: function(msg){
+            
             var loc = JSON.parse(msg);
-            var options = "<option value='0'>All Locations</option>";            
+            console.log(loc);
+            var options = "<option value='0'>All Locations</option>";  
+            if(loc.saved[0]==0){
+                 options = "<option selected value='0'>All Locations</option>";  
+            }          
             if (loc.all.length > 0){
                 for(var i = 0; i<loc.all.length; i++){
                     if(jQuery.inArray(loc.all[i].code,loc.saved) != -1){
@@ -60,4 +65,5 @@ function updateUserAjax(){
         }
     });
    }, 50000);
+   
 }

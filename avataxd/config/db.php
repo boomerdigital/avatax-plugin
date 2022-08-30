@@ -316,11 +316,11 @@ class DB{
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
              `id` int(11) NOT NULL AUTO_INCREMENT,
-             `address` varchar(255) NOT NULL,
-             `validatedAddresses` varchar(255) NOT NULL,
-             `coordinates` varchar(255) NOT NULL,
-             `resolutionQuality` varchar(255) NOT NULL,
-             `taxAuthorities` varchar(255) NOT NULL,
+             `address` varchar(500) NOT NULL,
+             `validatedAddresses` varchar(500) NOT NULL,
+             `coordinates` varchar(500) NOT NULL,
+             `resolutionQuality` varchar(500) NOT NULL,
+             `taxAuthorities` text NOT NULL,
              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
              `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
              `deleted_at` DATETIME DEFAULT CURRENT_TIMESTAMP,

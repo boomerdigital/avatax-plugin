@@ -3,12 +3,14 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Accounts{
     public function __construct(){ 
         if(RECORDCALCULATIONS=="yes"){
-        $this->getAllVendor();
-        add_action("wp_ajax_updateUserAjax" , array(&$this,'updateUserAjax'));
-        add_action("wp_ajax_nopriv_updateUserAjax" , array(&$this,'updateUserAjax'));
-        add_action( 'user_register', array(&$this,'vendorRegistrator'), 10, 1);
+            $this->getAllVendor();
+            add_action("wp_ajax_updateUserAjax" , array(&$this,'updateUserAjax'));
+            add_action("wp_ajax_nopriv_updateUserAjax" , array(&$this,'updateUserAjax'));
+            add_action( 'user_register', array(&$this,'vendorRegistrator'), 10, 1);
         }
+       
         if(get_option('vendor')=='0'){
+           
             $this->setWooAddressByAdmin();
             update_option('woocommerce_tax_based_on','base');
         }else{
@@ -20,7 +22,10 @@ class Accounts{
         global $wpdb;
         try{
             $wp_users_data = $wpdb->prefix.'user_data';
+            
             $checkReords = $wpdb->get_results("SELECT user_id FROM ".$wpdb->prefix."user_data WHERE status=1");
+            
+            
             if (!empty($checkReords)) {
                 foreach($checkReords as $vendor){
                     $this->getUsers($vendor->user_id);
@@ -40,6 +45,7 @@ class Accounts{
             $userRole=get_userdata($user_id);
             $userRole=$userRole->roles;
             $userRole=$userRole[0];
+            
             global $wpdb;
             $table_prefix = $wpdb->prefix;
             $wp_users = $table_prefix.'users';
@@ -47,7 +53,9 @@ class Accounts{
             if($vendorRole==$userRole){
                 $vendorUser = $wpdb->get_results( "SELECT ".$wp_users.".id, ".$wp_users.".user_nicename, ".$wp_users.".user_login, ".$wp_users.".user_email, ".$wp_users.".display_name FROM ".$wp_users." INNER JOIN ".$wp_usermeta." ON ".$wp_users.".ID = ".$wp_usermeta.".user_id WHERE ".$wp_usermeta.".meta_key = 'wp_capabilities' AND ".$wp_usermeta.".user_id = ".$user_id." AND ".$wp_users.".ID = ".$user_id." AND ".$wp_usermeta.".meta_value LIKE '%".$vendorRole."%' ORDER BY ".$wp_users.".user_nicename" );
                 if(!empty($vendorUser)){
+                   
                     $response = [];
+                  
                     $vendorMetaData = $this->getUserMeta($vendorUser[0]->id);
                     $response['id'] = $vendorUser[0]->id;
                     $response['display_name'] = $vendorUser[0]->display_name;
@@ -83,8 +91,10 @@ class Accounts{
             $table_prefix = $wpdb->prefix;
             $wp_usermeta = $table_prefix.'usermeta';
             $usersAddress = $wpdb->get_results("SELECT meta_value FROM ".$table_prefix."usermeta WHERE user_id=".$vendorID." AND meta_key='dokan_profile_settings'");
+           
             $userMeta = $usersAddress['0']->meta_value;
             $response = unserialize($userMeta);
+            
             return $response['address'];
         }catch(Exception $e){
             $message = $e->getMessage();
@@ -97,6 +107,7 @@ class Accounts{
              $responseAPI = Api::curl("api/v2/taxrates/bypostalcode?country=".$country."&postalCode=".$zip."");
              ErrorLog::sysLogs("Taxrates by country ".$country." zipcode ".$zip."".$responseAPI);
              $responseData = json_decode($responseAPI);
+             return $responseData;
                 if(empty($responseData->error)){
                     $responseData = $responseData;
                 };
@@ -167,6 +178,7 @@ class Accounts{
             $wp_users_data = $wpdb->prefix.'user_data';
             $wp_usermeta = $wpdb->prefix.'usermeta';
             $checkReords = $wpdb->get_results("SELECT id FROM ".$wpdb->prefix."user_data LIMIT 0,1");
+            
             if (empty($checkReords)) {
                 $vendorUser = $wpdb->get_results( "SELECT ".$wp_users.".id FROM ".$wp_users." INNER JOIN ".$wp_usermeta." ON ".$wp_users.".ID = ".$wp_usermeta.".user_id WHERE ".$wp_usermeta.".meta_key = 'wp_capabilities' AND ".$wp_usermeta.".meta_value LIKE '%".$vendorRole."%' ORDER BY ".$wp_users.".user_nicename" );
                 foreach($vendorUser as $vendor){
@@ -219,6 +231,7 @@ class Accounts{
                 $street_1 = get_option( 'woocommerce_store_address' );
                 $region = $splitCountry[1];
                 $country = $splitCountry[0];
+               
                 $zip = get_option( 'woocommerce_store_postcode' );
                 $city = get_option( 'woocommerce_store_city' );
                     if(empty($street_1)&&empty($city)&&empty($zip)){
@@ -235,6 +248,7 @@ class Accounts{
                         update_option( 'woocommerce_store_city',$adminMetaData['billing_city'][0]);
                         update_option( 'woocommerce_store_postcode',$adminMetaData['billing_postcode'][0]);
                     }else{
+                        
                         $storeRawCountry = get_option( 'woocommerce_default_country' );
                         $splitCountry = explode( ":", $storeRawCountry );
                         $street_1 = get_option( 'woocommerce_store_address' );
@@ -243,9 +257,12 @@ class Accounts{
                         $zip = get_option( 'woocommerce_store_postcode' );
                     }        
                         if($country=="US"){
+                            
                             $responseData = $this->byPostalCode($country,$zip);
+                            json_encode($responseData);
                         }else{
                             $responseData = $this->byAddress($street_1,$region,$country,$zip);
+                           
                         }
                         if(empty($responseData->error)){ 
                             $this->saveTaxRate($responseData,$region,$country);

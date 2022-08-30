@@ -37,7 +37,27 @@ class AdminSettings{
 
         if ( $current_section == 'mysettings' ) {
             $settings = array();
+            
+         
+            $settings[] = array( 'name' => __( 'Connection Settings', '' ), 'type' => 'title', 'desc'=>__('Log in to your AvaTax Admin Console to find your connection information.'), 'id' => 'connection' );
     
+            //Account Keys
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ac' );
+            $settings[] = array( 'name' => __( 'Account Number'), 'type' => 'text',   'id' => 'ac' );
+    
+            //License Keys
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'lic' );
+            $settings[] = array( 'name' => __( 'License Key'), 'type' => 'text',   'id' => 'lic' );
+            
+            // //Enviorment
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'env' );
+            $settings[] = array( 'name' => __( 'Enviroment'), 'type' => 'select',   'id' => 'env' , 'options' => 
+                array(
+                    'production' => __( 'Production' ),
+                    'sandbox' => __('Development')
+                )
+            );
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ttv' );
             // Add Title to the Settings
             $settings[] = array( 'name' => __( 'Tax Calculation', 'woorei' ), 'type' => 'title', 'desc' => __( 'The following options are used to configure my options.', 'woorei' ), 'id' => 'mysettings' );
             $settings[] = array( 'type' => 'woorei_dynamic_field_table', 'id' => 'woorei_dynamic_field_table' );
@@ -79,7 +99,7 @@ class AdminSettings{
             $settings[] = array( 'placeholder'=>'State/Region' , 'type' => 'text',  'class'=>'calc', 'id' => 'State' );
             $settings[] = array( 'placeholder'=>'Zip/Postcode' , 'type' => 'text',  'class'=>'calc', 'id' => 'Zip' );
             $settings[] = array( 'placeholder'=>'Country' , 'type' => 'text', 'id' => 'Country' , 'class'=>'calc' );
-    
+            
     
     
             //Validate Button
@@ -125,7 +145,9 @@ class AdminSettings{
             //Address Setting
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'check' );
             $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox',  'desc'=>__('Enable AvaTax address validation.'), 'id' => 'check' );
-    
+            //Require for Tax Calculations
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'req', 'class'=>'add' );
+            $settings[] = array( 'name' => __( 'Require for Tax Calculation	'), 'type' => 'checkbox', 'class'=>'', 'desc'=>__('Require address validation before orders can be placed with calculated tax.'), 'id' => 'req' );
             //Supported Countries
             //$settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'sloc', 'class'=>'add' );
             $settings[] = array( 'name' => __( 'Supported Countries'), 'type' => 'select', 'options' => 
@@ -134,29 +156,7 @@ class AdminSettings{
                     'bottom' => __('Specfic location Only')
                 ), 'id' => 'sloc','multiple'=>'multiple' );
     
-            //Require for Tax Calculations
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'req', 'class'=>'add' );
-            $settings[] = array( 'name' => __( 'Require for Tax Calculation	'), 'type' => 'checkbox', 'class'=>'', 'desc'=>__('Require address validation before orders can be placed with calculated tax.'), 'id' => 'req' );
-    
-            $settings[] = array( 'name' => __( 'Connection Settings', '' ), 'type' => 'title', 'desc'=>__('Log in to your AvaTax Admin Console to find your connection information.'), 'id' => 'connection' );
-    
-            //Account Keys
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ac' );
-            $settings[] = array( 'name' => __( 'Account Number'), 'type' => 'text',   'id' => 'ac' );
-    
-            //License Keys
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'lic' );
-            $settings[] = array( 'name' => __( 'License Key'), 'type' => 'text',   'id' => 'lic' );
-    
-            //Enviorment
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'env' );
-            $settings[] = array( 'name' => __( '
-            Enviroment'), 'type' => 'select',   'id' => 'env' , 'options' => 
-                array(
-                    'top' => __( 'Production' ),
-                    'bottom' => __('Development')
-                )
-            );
+            
             //cross-Border Classification
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cross' );
             $settings[] = array( 'name' => __( 'Cross-border classification'), 'type' => 'text',   'id' => 'cross' );

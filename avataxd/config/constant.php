@@ -2,9 +2,13 @@
 define( 'PLUGINNAME', 'Avatax Custom' );
 define( 'PLUGINPATH', ABSPATH . 'wp-content/plugins/' );
 define( 'AVATAXPLUGINPATH', PLUGINPATH.'avataxd/' );
+$env=get_option('env');
+if($env=='sandbox'){
+    define( 'AVATAXENDPOINT', 'https://sandbox-rest.avatax.com/' );
+}else{
+    define( 'AVATAXENDPOINT', 'https://rest.avatax.com/' );
+}
 define( 'AVATAXRELATIVEPATH', site_url().'/wp-content/plugins/avataxd/' );
-//define( 'AVATAXENDPOINT', 'https://sandbox-rest.avatax.com/' );
-define( 'AVATAXENDPOINT', 'https://rest.avatax.com/' );
 $ac = get_option('ac');
 define( 'ACCOUNTNUMBER', $ac );
 $lic = get_option('lic');

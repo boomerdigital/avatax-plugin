@@ -22,7 +22,7 @@ class Main{
 
 
     public function frontLoadAssets(){
-        echo "<script> var ADDRESSVALIDATION = ".ADDRESSVALIDATION.";</script>";
+        echo "<script> let ADDRESSVALIDATION = '".ADDRESSVALIDATION."';</script>";
         wp_enqueue_script( 'front_js', plugins_url( 'assets/js/frontend/frontend.js', __FILE__ ), array('jquery') );
     }
 

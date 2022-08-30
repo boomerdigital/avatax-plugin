@@ -35,8 +35,8 @@ jQuery(document).ready(function(){
     
     jQuery(document).on("click",'#place_order',function( e ){
         e.preventDefault();
-        var address_validation= jQuery("#address-validate").val();
-        if(address_validation=="yes"){       
+        
+        if(ADDRESSVALIDATION=="yes"){       
         
             var billing_address_1= jQuery("#billing_address_1").val();
             var billing_address_2= jQuery("#billing_address_2").val();

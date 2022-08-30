@@ -45,27 +45,45 @@ jQuery(document).ready(function($){
   });
     jQuery(document).on("click",".woocommerce-save-button",function(){
         var slocation = $('#sloc').val();
-        jQuery.ajax({
+        const urlString=window.location.search;
+        let paramString = urlString.split('?')[1];
+        let queryString = new URLSearchParams(paramString);
+        let section=queryString.get('section');
+
+        if(section=="mysettings"){
+
+            
+            jQuery.ajax({
                 type: "POST",
                 url: admin_ajax_url.ajax_url,
                 data: { action: 'saveCountries',"countries":slocation},
                 success: function(msg){
                 }
             });
+        }
     });   
     jQuery("#lic").blur(function(){
-       var accountId = jQuery('#ac').val();
-       var licenseKey = jQuery('#lic').val();
-            jQuery.ajax({
-                type: "POST",
-                url: admin_ajax_url.ajax_url,
-                data: { action: 'verifyAccount',"accountId":accountId,"licenseKey":licenseKey},	
-                success: function(msg){
-                    $('.errormessage').remove();
-                    $('#ac').after(msg);
-                }
-            });
+       verifyAccount();
       
   });
+  jQuery("#env").change(function(){
+         verifyAccount();
+    });
+    
+  function verifyAccount(){
+    let accountId = jQuery('#ac').val();
+    let licenseKey = jQuery('#lic').val();
+    let env=jQuery('#env').val();
+    jQuery.ajax({
+        type: "POST",
+        url: admin_ajax_url.ajax_url,
+        data: { action: 'verifyAccount',"accountId":accountId,"licenseKey":licenseKey,"env":env},	
+        success: function(msg){
+            $('.errormessage').remove();
+            $('#ac').after(msg);
+        }
+    });
+}
+  
 
 });

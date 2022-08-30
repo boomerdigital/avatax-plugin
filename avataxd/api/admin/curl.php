@@ -16,10 +16,20 @@ class Api{
             'Authorization: Basic '.base64_encode(ACCOUNTNUMBER.':'.LICENSEKEY));
            
         }
+        if(isset($data['env'])){
+            if($data['env']=='sandbox'){
+                curl_setopt($curl, CURLOPT_URL, 'https://sandbox-rest.avatax.com/'.$url);
+                
+            }else{
+                curl_setopt($curl, CURLOPT_URL, 'https://rest.avatax.com/'.$url);
+            }
+        }else{
+            curl_setopt($curl, CURLOPT_URL, AVATAXENDPOINT.$url);
+        }
         
 
         //$header = self::getHeader();
-        curl_setopt($curl, CURLOPT_URL, AVATAXENDPOINT.$url);
+        
         curl_setopt($curl, CURLOPT_HTTPHEADER, $header);
         curl_setopt($curl, CURLOPT_RETURNTRANSFER, 1);
 

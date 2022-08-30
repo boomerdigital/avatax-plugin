@@ -4,7 +4,7 @@ class Ajax{
 
     public function __construct(){
         //add_action( 'template_redirect', array($this,'plugin_is_page') );
-        //add_action( 'woocommerce_calculated_total', array($this,'discounted_calculated_total') ,10,2);
+      // add_action( 'woocommerce_calculated_total', array($this,'discounted_calculated_total') ,10,2);
        
         add_action("wp_ajax_locations" , array(&$this,'locations'));
         add_action("wp_ajax_nopriv_locations" , array(&$this,'locations'));
@@ -41,6 +41,7 @@ class Ajax{
         $accountId = $_POST['accountId'];
         $key = $_POST['licenseKey'];    
         $data['apiKey']=base64_encode($accountId.":".$key);
+        $data['env']=$_POST['env'];
         
       
             try{
@@ -82,33 +83,34 @@ class Ajax{
           wp_die();
     }
 
-    /*public function plugin_is_page() {
-        if (is_checkout()) {
-            $cart_data = WC()->session->get('cart');
-            echo "<pre>"; print_r($cart_data); die();
+    // public function plugin_is_page() {
+    //     if (is_checkout()) {
+    //         $cart_data = WC()->session->get('cart');
+    //         //echo "<pre>"; print_r($cart_data); die();
 
-            $productsInOrderIds = array(); 
+    //         $productsInOrderIds = array(); 
 
-            foreach ( WC()->cart->get_cart() as $order_item ) {
-                if ( isset( $order_item['data'] ) && !empty($order_item['data'] ) ) {
-                        $productsInOrderIds[] = $order_item['data']->get_id();
-                }
-            } 
-                // Get product Object 
-                foreach ( WC()->cart->get_cart() as $key => $item ) {
-                    if ( isset( $item['data'] ) && !empty( $item['data'] ) ) {
-                        $productsInOrder[] = $item['data'];
-                    }
-                } 
-            return $productsInOrderIds;
-        //if ()) {
-            die("yooo");
-            global $wp;
-            $orderId = intval(str_replace('checkout/order_received',$wp->request));
-            $order = new WC_Order( $orderId );
-            echo "<pre>"; print_r($wp->request); die();
-        }
-    }*/
+    //         foreach ( WC()->cart->get_cart() as $order_item ) {
+    //             if ( isset( $order_item['data'] ) && !empty($order_item['data'] ) ) {
+    //                     $productsInOrderIds[] = $order_item['data']->get_id();
+    //             }
+    //         } 
+    //             // Get product Object 
+    //             foreach ( WC()->cart->get_cart() as $key => $item ) {
+    //                 if ( isset( $item['data'] ) && !empty( $item['data'] ) ) {
+    //                     $productsInOrder[] = $item['data'];
+    //                 }
+    //             } 
+    //         //return $productsInOrderIds;
+    //         //if ()) {
+            
+    //         global $wp;
+            
+    //         $orderId = intval(str_replace('checkout','order_received',$wp->request));
+    //         $order = new WC_Order( $orderId );
+    //         //echo "<pre>"; print_r($wp->request); die();
+    //     }
+    // }
 
     public function discounted_calculated_total( $total, $cart ){
         //echo "<pre>"; print_r($cart->cart_contents); die();
@@ -125,8 +127,8 @@ class Ajax{
             $preArray['tax_class'] = $value['data']->tax_class;
             $array[] = $preArray;
         }
-        $defaultAddress = $this->getDefaultWoocommerceAddress();
-       // $this->createTransactionBeforeOrder($array,$defaultAddress);
+        //$defaultAddress = $this->getDefaultWoocommerceAddress();
+       //$this->createTransactionBeforeOrder($array,$defaultAddress);
         
         
     }
@@ -148,6 +150,7 @@ class Ajax{
             $order = new WC_Order( $order_id );
             $order = wc_get_order( $order_id );
             foreach ( $order->get_items() as $item_id => $item_values ) {
+               
                 $product = wc_get_product($item_values->get_product_id());
                 $tempArray = [];
                 $linesArray = [];
@@ -158,14 +161,14 @@ class Ajax{
                 $linesArray['amount'] = $item_values->get_total();
                 $linesArray['taxCode'] = get_post_meta($item_values->get_product_id(),'woocommerce_custom_taxcode',true);
                 $linesArray['itemCode'] = $product->get_sku();
-                $linesArray['description'] = get_post($item_values->get_product_id())->post_content;
+                $linesArray['description'] =$item_values['name'];
                 $linesArray = $this->arrayToObject($linesArray);
                 $tempArray['lines'] = [$linesArray];
                 $tempArray['type'] = "SalesInvoice";
-                $tempArray['companyCode'] = "DEFAULT";
-                $tempArray['date'] = "2021-09-07";
+                $tempArray['companyCode'] =COMPANYCODE;
+                $tempArray['date'] = date("Y-m-d");
                 $tempArray['customerCode'] = $order->get_customer_id();
-                $tempArray['purchaseOrderNo'] = "2021-09-07-001";
+                $tempArray['purchaseOrderNo'] = get_post($item_values->get_product_id())->post_id;
                 $tempArray['commit'] = false;
                 $tempArray['currencyCode'] = $order->get_currency();
                 $tempArray['description'] = get_post($item_values->get_product_id())->post_content;
@@ -229,12 +232,12 @@ class Ajax{
                 $linesArray = $this->arrayToObject($linesArray);
                 $tempArray['lines'] = [$linesArray];
                 $tempArray['type'] = "SalesOrder";
-                $tempArray['companyCode'] = "DEFAULT";
-                $tempArray['date'] = "2021-10-18";
+                $tempArray['companyCode'] =COMPANYCODE;
+                $tempArray['date'] = date("Y-m-d");
                 $tempArray['customerCode'] = "1111";
-                $tempArray['purchaseOrderNo'] = "2021-10-18-001";
+                $tempArray['purchaseOrderNo'] =  get_post($item_values['product_id'])->post_id;
                 $tempArray['commit'] = false;
-                //$tempArray['currencyCode'] = $order->get_currency();
+                $tempArray['currencyCode'] = "USD";
                 $tempArray['description'] = $item_values['description'];
                 $addressArray['line1'] = $defaultAddress['street_1'];
                 $addressArray['city'] = $defaultAddress['city'];
