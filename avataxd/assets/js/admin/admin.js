@@ -43,20 +43,24 @@ jQuery(document).ready(function($){
             });
         }
   });
-    jQuery(document).on("click",".woocommerce-save-button",function(){
-        var slocation = $('#sloc').val();
+    jQuery(document).on("click",".woocommerce-save-button",function(e){
+      
+
+      
         const urlString=window.location.search;
         let paramString = urlString.split('?')[1];
         let queryString = new URLSearchParams(paramString);
         let section=queryString.get('section');
 
         if(section=="mysettings"){
-
+            let slocation = $('#sloc').val();
+            let CompanyCode = $("#companycode").val();
+            let CompanyID=$("#companycode").find(':selected').attr('data-id');
             
             jQuery.ajax({
                 type: "POST",
                 url: admin_ajax_url.ajax_url,
-                data: { action: 'saveCountries',"countries":slocation},
+                data: { action: 'saveData',"countries":slocation,"CompanyCode":CompanyCode,"CompanyID":CompanyID},
                 success: function(msg){
                 }
             });
@@ -69,6 +73,27 @@ jQuery(document).ready(function($){
   jQuery("#env").change(function(){
          verifyAccount();
     });
+    jQuery(document).on('change','#companycode',function(){
+        let companyCode = jQuery(this).val();
+        let CompanyID=jQuery(this).find(':selected').attr('data-id');
+        jQuery.ajax({
+            type: "GET",
+            url: admin_ajax_url.ajax_url,
+            data: {action: "getAddressCompany",CompanyID:CompanyID},
+            dataType: "json",
+            success: function(data){
+                if (data != null){
+                    jQuery("#origin").val(data.origin);
+                    jQuery("#street").val(data.street);
+                    jQuery("#city").val(data.city);
+                    jQuery("#State").val(data.state);
+                    jQuery("#Zip").val(data.zip);
+                    jQuery("#country").val(data.country);
+                }
+            }
+        });
+    });
+
     
   function verifyAccount(){
     let accountId = jQuery('#ac').val();
@@ -79,11 +104,25 @@ jQuery(document).ready(function($){
         url: admin_ajax_url.ajax_url,
         data: { action: 'verifyAccount',"accountId":accountId,"licenseKey":licenseKey,"env":env},	
         success: function(msg){
-            $('.errormessage').remove();
-            $('#ac').after(msg);
+            let data=JSON.parse(msg);
+            if(data.status=="success"){
+
+                if(data.companies.length>0){
+                    
+                    renderselect(data) 
+                }
+                
+            }else{
+                jQuery("#companycode").html("");
+            }
+            
+                $('.errormessage').remove();
+                $('#ac').after(data.message);
         }
     });
 }
+
+
   
 
 });

@@ -26,7 +26,7 @@ class DB{
                  `id` int(11) NOT NULL AUTO_INCREMENT,
                  `accountId` int(11) DEFAULT NULL,
                  `companyId` int(11) DEFAULT NULL,
-                 `companyCode` varchar(255) DEFAULT NULL,
+                 `` varchar(255) DEFAULT NULL,
                  `name` varchar(255) DEFAULT NULL,
                  `isDefault` enum('0','1') DEFAULT NULL,
                  `isActive` enum('0','1') DEFAULT NULL,

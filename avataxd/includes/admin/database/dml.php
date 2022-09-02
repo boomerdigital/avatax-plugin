@@ -285,19 +285,13 @@ class Dml{
 
     public static function companyAdminDetail($response){
         global $wpdb;
-        $origin = $response->value[0]->line1;
-        $street = $response->value[0]->line2;
-        $city = $response->value[0]->city;
-        $region = $response->value[0]->region;
-        $postalcode = $response->value[0]->postalCode;
-        $country = $response->value[0]->country;
-
-        update_option( 'origin', $origin );
-        update_option( 'Street', $street );
-        update_option( 'City', $city );
-        update_option( 'State', $region );
-        update_option( 'Zip', $postalcode );
-        update_option( 'Country', $country );
+        
+        update_option( 'origin', $response['origin']);
+        update_option( 'Street', $response['street']);
+        update_option( 'City', $response['city']);
+        update_option( 'State', $response['state']);
+        update_option( 'Zip', $response['zip']);
+        update_option( 'Country', $response['country']);
     }     
       
     public static function updateAtTransactionsCommitStatus($commit,$transactionsId,$transactionsCode,$productId,$order_id){

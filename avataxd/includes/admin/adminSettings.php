@@ -5,7 +5,7 @@ class AdminSettings{
         $this->checkWocommerceExistence();
         add_filter( 'woocommerce_get_sections_tax', array('AdminSettings','addCustomMenu') );
         add_filter( 'woocommerce_get_settings_tax', array('AdminSettings','pluginHtml'), 10, 2 );
-        self::getCompanyInfo();
+        //self::getCompanyInfo();
         add_action( 'woocommerce_product_options_general_product_data', array('AdminSettings','woocommerce_product_custom_fields') ); 
         add_action('woocommerce_process_product_meta', array('AdminSettings','save_woocommerce_product_custom_fields')); 
 
@@ -87,7 +87,15 @@ class AdminSettings{
              
             //Company Code
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'com', 'class'=>'calc' );
-            $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'com' );
+           // $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'com' );
+           
+           $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'select', 'options' => 
+                array(
+    
+               
+    
+            ), 'class'=>'calc', 'id' => 'companycode');
+             
     
     
     
@@ -98,7 +106,7 @@ class AdminSettings{
             $settings[] = array( 'placeholder'=>'City/Town' , 'type' => 'text',  'class'=>'calc', 'id' => 'City' );
             $settings[] = array( 'placeholder'=>'State/Region' , 'type' => 'text',  'class'=>'calc', 'id' => 'State' );
             $settings[] = array( 'placeholder'=>'Zip/Postcode' , 'type' => 'text',  'class'=>'calc', 'id' => 'Zip' );
-            $settings[] = array( 'placeholder'=>'Country' , 'type' => 'text', 'id' => 'Country' , 'class'=>'calc' );
+            $settings[] = array( 'placeholder'=>'Country' , 'type' => 'text', 'id' => 'country' , 'class'=>'calc' );
             
     
     
@@ -151,7 +159,8 @@ class AdminSettings{
             //Supported Countries
             //$settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'sloc', 'class'=>'add' );
             $settings[] = array( 'name' => __( 'Supported Countries'), 'type' => 'select', 'options' => 
-                array(
+                
+            array(
                     'top' => __( 'All Locations' ),
                     'bottom' => __('Specfic location Only')
                 ), 'id' => 'sloc','multiple'=>'multiple' );

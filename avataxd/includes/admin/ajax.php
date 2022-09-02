@@ -4,7 +4,7 @@ class Ajax{
 
     public function __construct(){
         //add_action( 'template_redirect', array($this,'plugin_is_page') );
-      // add_action( 'woocommerce_calculated_total', array($this,'discounted_calculated_total') ,10,2);
+      //add_action( 'woocommerce_calculated_total', array($this,'discounted_calculated_total') ,10,2);
        
         add_action("wp_ajax_locations" , array(&$this,'locations'));
         add_action("wp_ajax_nopriv_locations" , array(&$this,'locations'));
@@ -12,10 +12,14 @@ class Ajax{
             add_action("woocommerce_checkout_order_processed" , array(&$this,'createTransaction'));
         }
         add_action("wp_head" , array(&$this,'setAdminAjax'));
-        $this->getCompany();
-
+        //$this->getCompany();
         add_action("wp_ajax_getCountriesList" , array(&$this,'getCountriesList'));
         add_action("wp_ajax_nopriv_getCountriesList" , array(&$this,'getCountriesList'));
+        add_action("wp_ajax_returnCompanies" , array(&$this,'returnCompanies'));
+        add_action("wp_ajax_nopriv_returnCompanies" , array(&$this,'returnCompanies'));
+        add_action("wp_ajax_getAddressCompany" , array(&$this,'getAddressCompany'));
+        add_action("wp_ajax_nopriv_getAddressCompany" , array(&$this,'getAddressCompany'));
+        
 
         add_action("wp_ajax_shippingTax" , array(&$this,'shippingTax'));
         add_action("wp_ajax_nopriv_shippingTax" , array(&$this,'shippingTax'));
@@ -25,15 +29,43 @@ class Ajax{
 
         add_action("wp_ajax_saveCountries" , array(&$this,'saveCountries'));
         add_action("wp_ajax_nopriv_saveCountries" , array(&$this,'saveCountries'));
+        add_action("wp_ajax_saveData" , array(&$this,'saveData'));
+        add_action("wp_ajax_nopriv_saveData" , array(&$this,'saveData'));
         
     }
 
-    public function saveCountries(){
-        $countries= $_POST['countries'];
+    public function saveCountries($countries){
+       
         update_option('supported_countries',$countries);
         
          echo $m[] = implode(',', unserialize(get_option('supported_countries')));
-          wp_die();
+        
+         
+    }
+    
+    public function saveCompany($CompanyCode,$CompanyID){
+        
+        try{
+
+            update_option('companycode',$CompanyCode);
+            update_option('companyID',$CompanyID);
+            $response = Api::curl("api/v2/companies?filter=id eq ".$CompanyID);
+            ErrorLog::sysLogs("Get company detail successfully".$response);
+            $response = json_decode($response, TRUE);
+            Dml::insertAtCompany($response);
+            wp_die();   
+        }catch(Exception $e){
+            $message = $e->getMessage();
+            ErrorLog::errorLogs($message);
+        }
+    }
+    public function saveData(){
+        $countries= $_POST['countries'];
+        $CompanyCode= $_POST['CompanyCode'];
+        $CompanyID= $_POST['CompanyID'];
+        $this->saveCountries($countries);
+        $this->saveCompany($CompanyCode,$CompanyID);
+
     }
 
     public function verifyAccount(){
@@ -42,6 +74,7 @@ class Ajax{
         $key = $_POST['licenseKey'];    
         $data['apiKey']=base64_encode($accountId.":".$key);
         $data['env']=$_POST['env'];
+        $companies="";
         
       
             try{
@@ -49,11 +82,21 @@ class Ajax{
         
             $response = json_decode($response, TRUE);
             ErrorLog::sysLogs("Account verify successfully Account No=".$accountId);
+            
             if(isset($response['error'])){
-                echo '<span class="errormessage" style="margin-left:8px;color:red;"> '.$response['error']['message'].'</span>';
+                 $message='<span class="errormessage" style="margin-left:8px;color:red;"> '.$response['error']['message'].'</span>';
+                 $array['status']="error";
             }else{
-                echo '<span class="errormessage" style="margin-left:8px;color:green;">Account verify successfully.</span>';
+                $message= '<span class="errormessage" style="margin-left:8px;color:green;">Account verify successfully.</span>';
+                $array['status']="success";
+               
+                    $companies=$this->getCompanyList($data);
+             
+
             }
+            $array['message']=$message;
+            $array['companies']=$companies;
+            echo json_encode($array);
         }catch(Exception $e){
             $message = $e->getMessage();
             ErrorLog::errorLogs($message);
@@ -113,7 +156,7 @@ class Ajax{
     // }
 
     public function discounted_calculated_total( $total, $cart ){
-        //echo "<pre>"; print_r($cart->cart_contents); die();
+        echo "<pre>"; print_r($cart->cart_contents); die();
         $array = [];
         foreach ($cart->cart_contents as $key => $value) {
             $preArray['product_id'] = $value['product_id'];
@@ -298,6 +341,81 @@ class Ajax{
         $countryArray['saved'] =  get_option('supported_countries');
         $countryArray['all'] = json_decode(file_get_contents(AVATAXRELATIVEPATH.'json/country.json')); 
         echo json_encode($countryArray); die();
+    }
+    public function getCompanyList($data=null){
+       
+        $companies=[];
+        try{
+            
+            $response = Api::curl("api/v2/companies","GET",$data);
+            ErrorLog::sysLogs("Get company detail successfully".$response);
+            $response=json_decode($response,true);
+            
+            foreach($response['value'] as $value){
+               if($value['isActive']==true){
+                   
+                $data=[
+                    'id'=>$value['id'],
+                    'companyCode'=>$value['companyCode'],
+                    'name'=>$value['name'],
+                    'isDefault'=>$value['isDefault'],
+                    'isActive'=>$value['isActive'],
+
+                ];
+                $companies[]=$data;
+            }
+
+            }
+            
+           return $companies;
+           
+           
+           
+            
+        }catch(Exception $e){
+            $message = $e->getMessage();
+            ErrorLog::errorLogs($message);
+        }
+        
+       
+       
+    
+    }
+
+    public function returnCompanies(){
+        $companyArray = [];
+        $companyArray['saved'] =  get_option('companyID');
+        $companyArray['companies'] = $this->getCompanyList();
+        echo json_encode($companyArray);die();
+
+    }
+
+    public function getAddressCompany(){
+        
+        try{
+            $addressArray = [];
+            $CompanyID=$_GET['CompanyID'];
+            $response = Api::curl("api/v2/companies/".$CompanyID."/locations");
+            ErrorLog::sysLogs("List all location objects defined for this company.".$response);
+            $response = json_decode($response);
+            $array=[
+                'origin'=>$response->value[0]->line1,
+                'street'=>$response->value[0]->line2,
+                'city'=>$response->value[0]->city,
+                'state'=>$response->value[0]->region,
+                'country'=>$response->value[0]->country,
+                'zip'=>$response->value[0]->postalCode,
+
+            ];
+            
+            $response =  Dml::companyAdminDetail($array);
+            echo json_encode($array); die();
+        }catch(Exception $e){
+            $message = $e->getMessage();
+            ErrorLog::errorLogs($message);
+        }
+
+        
     }
 
 }

@@ -21,6 +21,7 @@ jQuery(document).ready(function(){
 
     /*Getting all countries list for country field in admin*/
     getAllCountries();
+    getCompanyList();
     updateUserAjax();
 });
 
@@ -32,7 +33,7 @@ function getAllCountries(){
         success: function(msg){
             
             var loc = JSON.parse(msg);
-            console.log(loc);
+           
             var options = "<option value='0'>All Locations</option>";  
             if(loc.saved[0]==0){
                  options = "<option selected value='0'>All Locations</option>";  
@@ -54,6 +55,43 @@ function getAllCountries(){
     });
 }
 
+function getCompanyList(){
+    jQuery.ajax({
+        type: "GET",
+        url: admin_ajax_url.ajax_url,
+        data: {action: "returnCompanies"},
+        dataType: "json",
+        success: function(data){
+            
+            renderselect(data)
+        }
+    });
+}
+
+function renderselect(data){
+    let defaul='';	
+    let choose='';
+    var options ="<option value='0'>Select  a Company </option>";
+    
+    if (data != null){
+        
+        for(var i = 0; i<data.companies.length; i++){
+            
+            
+            if(data.companies[i].isDefault ==true){
+                defaul="(Default)";
+            }
+            if(data.companies[i].id ==data.saved){
+                choose="selected";
+            }
+            options += "<option data-id="+data.companies[i].id+" "+choose+" value='"+ data.companies[i].companyCode+"'>Code: "+data.companies[i].companyCode+ "/"+data.companies[i].name+defaul+"</option>";
+            defaul='';
+            choose='';
+        }  
+        jQuery("#companycode").html(options);
+    }
+} 
+   
 function updateUserAjax(){
     setTimeout(function(){
     jQuery.ajax({
