@@ -22,9 +22,11 @@ include "includes/frontend/frontAjax.php";
 include "api/frontend/frontEndApi.php";
 include "includes/admin/function.php";
 include "helper/state.php";
+include "includes/admin/dokan-customer.php";
 new Main;
 new Ajax;
 new FrontAjax;
+new DokanC;
 
 register_activation_hook(__FILE__, array('DB', 'activate'));
 //register_deactivation_hook( __FILE__, array('DB', 'deactivate') );

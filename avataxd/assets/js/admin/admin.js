@@ -66,26 +66,28 @@ jQuery(document).ready(function($){
             });
         }
     });   
-    jQuery("#lic").blur(function(){
-       verifyAccount();
-      
-  });
-  jQuery("#env").change(function(){
-         verifyAccount();
+    jQuery(document).on("click","#testc",function(e){
+
+        verifyAccount();
     });
+   
     jQuery(document).on('change','#companycode',function(){
-        let companyCode = jQuery(this).val();
+       
         let CompanyID=jQuery(this).find(':selected').attr('data-id');
+        let accountId = jQuery('#ac').val();
+        let licenseKey = jQuery('#lic').val();
+        let env = jQuery("#env").val();
+    
         jQuery.ajax({
-            type: "GET",
+            type: "POST",
             url: admin_ajax_url.ajax_url,
-            data: {action: "getAddressCompany",CompanyID:CompanyID},
+            data: {action: "getAddressCompany",CompanyID:CompanyID,accountId:accountId,licenseKey:licenseKey,env:env},
             dataType: "json",
             success: function(data){
                 if (data != null){
                     jQuery("#origin").val(data.origin);
                     jQuery("#street").val(data.street);
-                    jQuery("#city").val(data.city);
+                    jQuery("#City").val(data.city);
                     jQuery("#State").val(data.state);
                     jQuery("#Zip").val(data.zip);
                     jQuery("#country").val(data.country);

@@ -23,6 +23,7 @@ jQuery(document).ready(function(){
     getAllCountries();
     getCompanyList();
     updateUserAjax();
+    renderButton();
 });
 
 function getAllCountries(){
@@ -103,5 +104,12 @@ function updateUserAjax(){
         }
     });
    }, 50000);
+
+   
    
 }
+
+function renderButton(){
+    let button=' <br><br> <input  id="testc" class="button-primary woocommerce-save-button" type="button" value="Test Connection">';
+    jQuery("#env").after(button);
+   }

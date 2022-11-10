@@ -4,15 +4,16 @@ class Api{
 
     public static function curl($url, $method = "GET" ,$data = array()){
         $curl = curl_init();
-        
+        $app_name='BOOMER; 1.0; API REST;V2;'.gethostname();
         if(isset($data['apiKey'])){
            
-            $header= array('Content-type: application/json',
+            $header= array('Content-type: application/json',$app_name.';',
             'Authorization: Basic '.$data['apiKey']);
            
         
         }else{
-            $header= array('Content-type: application/json',
+            
+            $header= array('Content-type: application/json',$app_name.';',
             'Authorization: Basic '.base64_encode(ACCOUNTNUMBER.':'.LICENSEKEY));
            
         }

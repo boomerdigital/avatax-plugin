@@ -3,36 +3,287 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Ajax{
 
     public function __construct(){
-        //add_action( 'template_redirect', array($this,'plugin_is_page') );
-      //add_action( 'woocommerce_calculated_total', array($this,'discounted_calculated_total') ,10,2);
-       
+       // add_action( 'template_redirect', array(&$this,'createTransaction') );
         add_action("wp_ajax_locations" , array(&$this,'locations'));
         add_action("wp_ajax_nopriv_locations" , array(&$this,'locations'));
-        if(RECORDCALCULATIONS=="yes"){
-            add_action("woocommerce_checkout_order_processed" , array(&$this,'createTransaction'));
-        }
         add_action("wp_head" , array(&$this,'setAdminAjax'));
-        //$this->getCompany();
         add_action("wp_ajax_getCountriesList" , array(&$this,'getCountriesList'));
         add_action("wp_ajax_nopriv_getCountriesList" , array(&$this,'getCountriesList'));
         add_action("wp_ajax_returnCompanies" , array(&$this,'returnCompanies'));
         add_action("wp_ajax_nopriv_returnCompanies" , array(&$this,'returnCompanies'));
         add_action("wp_ajax_getAddressCompany" , array(&$this,'getAddressCompany'));
         add_action("wp_ajax_nopriv_getAddressCompany" , array(&$this,'getAddressCompany'));
-        
-
         add_action("wp_ajax_shippingTax" , array(&$this,'shippingTax'));
         add_action("wp_ajax_nopriv_shippingTax" , array(&$this,'shippingTax'));
-
         add_action("wp_ajax_verifyAccount" , array(&$this,'verifyAccount'));
         add_action("wp_ajax_nopriv_verifyAccount" , array(&$this,'verifyAccount'));
-
         add_action("wp_ajax_saveCountries" , array(&$this,'saveCountries'));
         add_action("wp_ajax_nopriv_saveCountries" , array(&$this,'saveCountries'));
         add_action("wp_ajax_saveData" , array(&$this,'saveData'));
-        add_action("wp_ajax_nopriv_saveData" , array(&$this,'saveData'));
+        add_action("wp_ajax_nopriv_saveData" , array(&$this,'saveData'));   
+        
+       if(ENABLEAVATAX=="yes"){
+
+           add_action( 'woocommerce_calculated_total', array(&$this,'avatax_calculate_taxes'),10,2);
+           if(RECORDCALCULATIONS=="yes"){
+               add_action("woocommerce_checkout_order_processed" , array(&$this,'createTransaction'),10,1);
+            }
+            
+        }
         
     }
+   
+    public function get_vendor_address($vendor_id){
+    
+        $response=$this->getDefaultWoocommerceAddress();
+        $response['store_name']= get_bloginfo( 'name' );
+        if ( in_array( 'dokan-lite/dokan.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+
+            global $wpdb;
+            $table_prefix = $wpdb->prefix;
+            $wp_usermeta = $table_prefix.'usermeta';
+            $vendorAddress = $wpdb->get_results("SELECT meta_value FROM ".$table_prefix."usermeta WHERE user_id=".$vendor_id." AND meta_key='dokan_profile_settings'");
+            if($vendorAddress!=null){
+            
+                $data = unserialize($vendorAddress[0]->meta_value);
+                $response['street_1']=$data['address']['street_1'];
+                $response['street_2']=$data['address']['street_2'];
+                $response['city']=$data['address']['city'];
+                $response['region']=$data['address']['state'];
+                $response['country']=$data['address']['country'];
+                $response['zip']=$data['address']['zip'];
+                $response['store_name']=$data['store_name'];
+
+            }
+        }
+
+        return $response;
+    }
+    function get_taxcode($product_id){
+        
+        $taxcode=get_post_meta($product_id, 'woocommerce_custom_taxcode',true);
+            $terms = get_the_terms($product_id, 'product_cat' );
+            if ( !empty( $terms ) ) {
+                foreach ( $terms as $term ) {
+                    $taxcode=($taxcode=="")?get_term_meta($term->term_id, 'avalara_category_taxcode', true):$taxcode;
+                    
+                }
+            }
+            
+            $taxcode=($taxcode=="")?DEFAULTTAXCODE:$taxcode;
+            return $taxcode;
+            
+    }
+    function search_array($search,$source) {
+        return (count(array_intersect($search, $source)) == count($search));
+     }
+
+    
+    function avatax_calculate_taxes( $total, $cart ) { 
+        $totalr=$total;
+        $linesArray=[];
+        $tempArray = [];
+        
+        if (get_option('woocommerce_tax_display_cart')=="incl"){
+            $include=true;
+        }else{
+            $include=false;
+        }
+        $disct=false;
+        global $woocommerce;
+        $discount_total=0;
+        $countries=get_option('supported_countries');
+        $search= array(0 , $woocommerce->customer->shipping_country);
+        $customer_code=get_the_author_meta( 'avatax_customer_code', $woocommerce->customer->ID );
+        $customer_code=($customer_code=="")?$woocommerce->customer->ID:$customer_code;
+    
+        $i=0;
+       
+
+            foreach ($cart->cart_contents as $key => $value) {
+            
+                $total=$value['line_total'];
+                $regular_price = $value['data']->get_regular_price();
+                $sale_price = $value['data']->get_sale_price();
+                $discount = ( (float)$regular_price  * (int)$value['quantity']);
+            
+                if($discount>$value['line_total']){
+                    $disct=true;
+                    $total=$discount;
+                }
+                //get vendor address
+                $post_obj=get_post( $value['product_id']);
+                $address=$this->get_vendor_address($post_obj->post_author);
+                $taxcode=$this->get_taxcode($value['product_id']);
+                
+                $linesArray[]=array(
+                    "number"=>$i+=1,
+                    "quantity"=>$value['quantity'],
+                    "amount"=>$total,
+                    "itemCode"=>$value['data']->get_sku(),
+                    "description"=>$value['data']->name,
+                    "taxCode"=>$taxcode,
+                    "discounted"=>$disct,
+                    "taxIncluded"=>$include,
+                    "merchantSellerIdentifier"=>$post_obj->post_author."-".$address['store_name'], 
+                    "addresses"=>array(
+                        "shipFrom"=>array(
+                            "line1"=>$address["street_1"],
+                            "line2"=>$address["street_2"],
+                            "city"=> $address["city"],
+                            "region"=>$address["region"],
+                            "country"=>$address["country"],
+                            "postalCode"=>$address["zip"]
+                        ),
+                        "shipTo"=>array(
+                            "line1"=>$woocommerce->customer->shipping_address_1,
+                            "line2"=>$woocommerce->customer->shipping_address_2,
+                            "city"=>$woocommerce->customer->shipping_city,
+                            "region"=>$woocommerce->customer->shipping_state,
+                            "country"=>$woocommerce->customer->shipping_country,
+                            "postalCode"=>$woocommerce->customer->shipping_postcode
+                        )
+                    )
+                );
+            }
+
+        
+                $tempArray['lines'] = $linesArray;
+                $tempArray['type'] = "SalesOrder";
+                $tempArray['companyCode'] =COMPANYCODE;
+                $tempArray['discount'] =$cart->get_discount_total();
+                $tempArray['date'] = date("Y-m-d");
+                $tempArray['customerCode'] =$customer_code;
+                $tempArray['currencyCode'] = get_option('woocommerce_currency');
+                $tempArray['EntityUseCode'] = get_the_author_meta( 'avatax_customer_exempt_reason', $woocommerce->customer->ID );
+                $tempArray['exemptionNo'] = get_the_author_meta( 'avatax_exemption_number', $woocommerce->customer->ID );
+                $new = (object)$tempArray;
+                $new = json_encode($new);
+                $response = Api::curl("api/v2/transactions/create",'POST',$new);
+                ErrorLog::sysLogs("Transactions create successfully".$response);
+                $response = json_decode($response);
+                
+                $cart->taxes= array((float) $response->totalTax);
+                $total=(float)($response->totalAmount)-$response->totalDiscount;
+                if($total==0){
+                   $total=(float)($totalr+$response->totalTax)-$cart->get_discount_total();
+                }
+        
+        return $total;
+}
+
+public function createTransaction($order_id){
+    try{
+       
+        global $wpdb;
+        global $woocommerce;
+        $table_prefix = $wpdb->prefix;
+        $wp_usermeta = $table_prefix.'usermeta';
+        $order = new WC_Order($order_id);
+        $order = wc_get_order($order_id);
+        $tempArray = [];
+        $linesArray = [];
+        $disct=false;
+        if (get_option('woocommerce_tax_display_cart')=="incl"){
+            $include=true;
+        }else{
+            $include=false;
+        }
+        $countries=get_option('supported_countries');
+        $search= array(0 , $order->get_shipping_country());
+        $customer_code=get_the_author_meta( 'avatax_customer_code', $order->get_customer_id() );
+        $customer_code=($customer_code=="")?$order->get_customer_id():$customer_code;
+        $i=0;
+        foreach ( $order->get_items() as $item_id => $item_values ) {
+            $total=$item_values->get_total();
+            $post_obj=get_post($item_values->get_product_id());
+            $address=$this->get_vendor_address($post_obj->post_author);
+           
+            $product =$item_values->get_product();
+            $regular_price = $product->get_regular_price();
+            $discount = ( (float)$regular_price * (int)$item_values->get_quantity());
+            if($discount>$item_values->get_total()){
+                $disct=true;
+                $total=$discount;
+            }
+            $taxcode=$this->get_taxcode($item_values->get_product_id());
+            $linesArray[]=array(
+                "number"=>$i+=1,
+                "quantity"=> $item_values->get_quantity(),
+                "amount"=>$total,
+                "itemCode"=>$product->get_sku(),
+                "description"=>$product->get_name(),
+                "taxCode"=>$taxcode,
+                "discounted"=>$disct,
+                "taxIncluded"=>$include,
+                "merchantSellerIdentifier"=>$post_obj->post_author."-".$address['store_name'], 
+                "addresses"=>array(
+                    "shipFrom"=>array(
+                        "line1"=>$address["street_1"],
+                        "line2"=>$address["street_2"],
+                        "city"=> $address["city"],
+                        "region"=>$address["region"],
+                        "country"=>$address["country"],
+                        "postalCode"=>$address["zip"]
+                    ),
+                    "shipTo"=>array(
+                        "line1"=>$order->get_shipping_address_1(),
+                        "line2"=>$order->get_shipping_address_2(),
+                        "city"=>$order->get_shipping_city(),
+                        "region"=>$order->get_shipping_state(),
+                        "country"=>$order->get_shipping_country(),
+                        "postalCode"=>$order->get_shipping_postcode()
+                    )
+                )
+            );
+
+        }
+       
+        $randomcode = substr(str_shuffle("ABCDDEFGHIJKLMNOPQRSTUVWXYZ"), 0,4);
+        $tempArray['code']=$randomcode."-".$order_id;
+        $tempArray['lines'] = $linesArray;
+        $tempArray['type'] = "SalesInvoice";
+        $tempArray['companyCode'] =COMPANYCODE;
+        $tempArray['date'] =date("Y-m-d");
+        $tempArray['customerCode'] =$customer_code;
+        $tempArray['currencyCode'] =$order->get_currency();
+        $tempArray['EntityUseCode'] = get_the_author_meta( 'avatax_customer_exempt_reason', $order->get_customer_id() );
+        $tempArray['exemptionNo'] = get_the_author_meta( 'avatax_exemption_number', $order->get_customer_id() );
+        $tempArray['purchaseOrderNo'] = $order->get_id();
+        $tempArray['discount'] =$order->get_discount_total();
+        $tempArray['commit'] = false;
+        $tempArray['currencyCode'] = $order->get_currency();
+        $new = (object)$tempArray;
+        $new = json_encode($new);
+        $response = Api::curl("api/v2/transactions/create",'POST',$new);
+        ErrorLog::sysLogs("Transactions create successfully".$response);
+        $response = json_decode($response);
+        Dml::insertAtTransactions($response,$productId,$order_id);
+        $transactionsId = $response->id;
+        $transactionsCode = $response->code;
+        $summary = $response->summary;
+        Dml::insertAtTransactionsSummary($summary[0],$transactionsId,$productId,$order_id);
+        update_post_meta( $order->get_id(),'_order_tax', $response->totalTax);
+
+            if(COMMIT=="yes"){
+                $commitObj = array("commit"=>true);
+                $commitObj = (object)$commitObj;
+                $data = json_encode($commitObj);
+                $commit = Api::curl("api/v2/companies/".$tempArray['companyCode']."/transactions/".$transactionsCode."/commit", 'POST',$data);
+                $commit = json_decode($commit, TRUE); 
+                Dml::updateAtTransactionsCommitStatus($commit,$transactionsId,$transactionsCode,$productId,$order_id);
+            }     
+
+        
+    }catch(Exception $e){
+        $message = $e->getMessage();
+        ErrorLog::errorLogs($message);
+    }      
+
+
+
+}
+  
 
     public function saveCountries($countries){
        
@@ -42,7 +293,7 @@ class Ajax{
         
          
     }
-    
+   
     public function saveCompany($CompanyCode,$CompanyID){
         
         try{
@@ -68,12 +319,19 @@ class Ajax{
 
     }
 
-    public function verifyAccount(){
+    public function headerkey($array){
         $data=array();
-        $accountId = $_POST['accountId'];
-        $key = $_POST['licenseKey'];    
+        $accountId = $array['accountId'];
+        $key = $array['licenseKey'];   
+        
         $data['apiKey']=base64_encode($accountId.":".$key);
-        $data['env']=$_POST['env'];
+        $data['env']=$array['env'];
+        return $data;
+    }
+    public function verifyAccount(){
+
+        $data= $this->headerkey($_POST);
+        $accountId = $_POST['accountId'];
         $companies="";
         
       
@@ -94,6 +352,7 @@ class Ajax{
              
 
             }
+            $array['saved'] = get_option('companyID');
             $array['message']=$message;
             $array['companies']=$companies;
             echo json_encode($array);
@@ -126,56 +385,6 @@ class Ajax{
           wp_die();
     }
 
-    // public function plugin_is_page() {
-    //     if (is_checkout()) {
-    //         $cart_data = WC()->session->get('cart');
-    //         //echo "<pre>"; print_r($cart_data); die();
-
-    //         $productsInOrderIds = array(); 
-
-    //         foreach ( WC()->cart->get_cart() as $order_item ) {
-    //             if ( isset( $order_item['data'] ) && !empty($order_item['data'] ) ) {
-    //                     $productsInOrderIds[] = $order_item['data']->get_id();
-    //             }
-    //         } 
-    //             // Get product Object 
-    //             foreach ( WC()->cart->get_cart() as $key => $item ) {
-    //                 if ( isset( $item['data'] ) && !empty( $item['data'] ) ) {
-    //                     $productsInOrder[] = $item['data'];
-    //                 }
-    //             } 
-    //         //return $productsInOrderIds;
-    //         //if ()) {
-            
-    //         global $wp;
-            
-    //         $orderId = intval(str_replace('checkout','order_received',$wp->request));
-    //         $order = new WC_Order( $orderId );
-    //         //echo "<pre>"; print_r($wp->request); die();
-    //     }
-    // }
-
-    public function discounted_calculated_total( $total, $cart ){
-        echo "<pre>"; print_r($cart->cart_contents); die();
-        $array = [];
-        foreach ($cart->cart_contents as $key => $value) {
-            $preArray['product_id'] = $value['product_id'];
-            $preArray['quantity'] = $value['quantity'];
-            $preArray['line_total'] = $value['line_total'];
-            $preArray['name'] = $value['data']->name;
-            $preArray['slug'] = $value['data']->slug;
-            $preArray['description'] = $value['data']->description;
-            $preArray['sku'] = $value['data']->sku;
-            $preArray['tax_status'] = $value['data']->tax_status;
-            $preArray['tax_class'] = $value['data']->tax_class;
-            $array[] = $preArray;
-        }
-        //$defaultAddress = $this->getDefaultWoocommerceAddress();
-       //$this->createTransactionBeforeOrder($array,$defaultAddress);
-        
-        
-    }
-
     public function locations(){
         try{
             $response = Api::curl("api/v2/definitions/nexus/US");
@@ -188,65 +397,7 @@ class Ajax{
         wp_die(); 
     } 
     
-    public function createTransaction($order_id){
-        try{
-            $order = new WC_Order( $order_id );
-            $order = wc_get_order( $order_id );
-            foreach ( $order->get_items() as $item_id => $item_values ) {
-               
-                $product = wc_get_product($item_values->get_product_id());
-                $tempArray = [];
-                $linesArray = [];
-                $addressArray = [];
-                $productId = $item_values->get_product_id();
-                $linesArray['number'] = $order_id;
-                $linesArray['quantity'] = $item_values->get_quantity();
-                $linesArray['amount'] = $item_values->get_total();
-                $linesArray['taxCode'] = get_post_meta($item_values->get_product_id(),'woocommerce_custom_taxcode',true);
-                $linesArray['itemCode'] = $product->get_sku();
-                $linesArray['description'] =$item_values['name'];
-                $linesArray = $this->arrayToObject($linesArray);
-                $tempArray['lines'] = [$linesArray];
-                $tempArray['type'] = "SalesInvoice";
-                $tempArray['companyCode'] =COMPANYCODE;
-                $tempArray['date'] = date("Y-m-d");
-                $tempArray['customerCode'] = $order->get_customer_id();
-                $tempArray['purchaseOrderNo'] = get_post($item_values->get_product_id())->post_id;
-                $tempArray['commit'] = false;
-                $tempArray['currencyCode'] = $order->get_currency();
-                $tempArray['description'] = get_post($item_values->get_product_id())->post_content;
-                $addressArray['line1'] = $order->get_billing_address_1();
-                $addressArray['city'] = $order->get_billing_city();
-                $addressArray['region'] = $order->get_billing_state();
-                $addressArray['country'] = $order->get_billing_country();
-                $addressArray['postalCode'] = $order->get_billing_postcode();
-                $addressArray1['singleLocation'] = $this->arrayToObject($addressArray);
-                $tempArray['addresses'] = $this->arrayToObject($addressArray1);
-                $new = (object)$tempArray;
-                $new = json_encode($new);
-                $response = Api::curl("api/v2/transactions/create",'POST',$new);
-                ErrorLog::sysLogs("Transactions create successfully".$response);
-                $response = json_decode($response);
-                Dml::insertAtTransactions($response,$productId,$order_id);
-                $transactionsId = $response->id;
-                $transactionsCode = $response->code;
-                $summary = $response->summary;
-                Dml::insertAtTransactionsSummary($summary[0],$transactionsId,$productId,$order_id);
-                if(COMMIT=="yes"){
-                    $commitObj = array("commit"=>true);
-                    $commitObj = (object)$commitObj;
-                    $data = json_encode($commitObj);
-                    $commit = Api::curl("api/v2/companies/".$tempArray['companyCode']."/transactions/".$transactionsCode."/commit", 'POST',$data);
-                    $commit = json_decode($commit, TRUE); 
-                    Dml::updateAtTransactionsCommitStatus($commit,$transactionsId,$transactionsCode,$productId,$order_id);
-                }        
-            }
-        }catch(Exception $e){
-            $message = $e->getMessage();
-            ErrorLog::errorLogs($message);
-        }      
-    }
-
+   
     public function getDefaultWoocommerceAddress(){
         $storeRawCountry = get_option( 'woocommerce_default_country' );
         $splitCountry = explode( ":", $storeRawCountry );
@@ -258,51 +409,7 @@ class Ajax{
         return $return;
     }
 
-    public function createTransactionBeforeOrder($array, $defaultAddress){
-        try{
-            $allRes = [];
-            foreach ( $array as $item_id => $item_values ) {
-                $tempArray = [];
-                $linesArray = [];
-                $addressArray = [];
-                $productId = $item_values['product_id'];
-                $linesArray['number'] = $item_values['product_id'];
-                $linesArray['quantity'] = $item_values['quantity'];
-                $linesArray['amount'] = $item_values['line_total'];
-                $linesArray['taxCode'] = get_post_meta($productId,'woocommerce_custom_taxcode',true);
-                $linesArray['itemCode'] = $item_values['sku'];
-                $linesArray['description'] = $item_values['description'];
-                $linesArray = $this->arrayToObject($linesArray);
-                $tempArray['lines'] = [$linesArray];
-                $tempArray['type'] = "SalesOrder";
-                $tempArray['companyCode'] =COMPANYCODE;
-                $tempArray['date'] = date("Y-m-d");
-                $tempArray['customerCode'] = "1111";
-                $tempArray['purchaseOrderNo'] =  get_post($item_values['product_id'])->post_id;
-                $tempArray['commit'] = false;
-                $tempArray['currencyCode'] = "USD";
-                $tempArray['description'] = $item_values['description'];
-                $addressArray['line1'] = $defaultAddress['street_1'];
-                $addressArray['city'] = $defaultAddress['city'];
-                $addressArray['region'] = $defaultAddress['region'];
-                $addressArray['country'] = $defaultAddress['country'];
-                $addressArray['postalCode'] = $defaultAddress['zip'];
-                $addressArray1['singleLocation'] = $this->arrayToObject($addressArray);
-                $tempArray['addresses'] = $this->arrayToObject($addressArray1);
-                $new = (object)$tempArray;
-                $new = json_encode($new);
-                $response = Api::curl("api/v2/transactions/create",'POST',$new);
-                ErrorLog::sysLogs("Transactions create successfully".$response);
-                $allRes[] = json_decode($response);
-                  
-            }
-                //echo "<pre>"; print_r($allRes); die();
-        }catch(Exception $e){
-            $message = $e->getMessage();
-            ErrorLog::errorLogs($message);
-        }      
-    }
-    
+
     public function getCompany(){
         try{
             $response = Api::curl("api/v2/companies");
@@ -376,9 +483,7 @@ class Ajax{
             $message = $e->getMessage();
             ErrorLog::errorLogs($message);
         }
-        
-       
-       
+           
     
     }
 
@@ -393,9 +498,13 @@ class Ajax{
     public function getAddressCompany(){
         
         try{
+            $data= $this->headerkey($_POST);
+          
+            $accountId = $_POST['accountId'];
             $addressArray = [];
-            $CompanyID=$_GET['CompanyID'];
-            $response = Api::curl("api/v2/companies/".$CompanyID."/locations");
+            $CompanyID=$_POST['CompanyID'];
+            $response = Api::curl("api/v2/companies/".$CompanyID."/locations","GET",$data);
+           
             ErrorLog::sysLogs("List all location objects defined for this company.".$response);
             $response = json_decode($response);
             $array=[
@@ -417,6 +526,8 @@ class Ajax{
 
         
     }
+
+  
 
 }
 

@@ -75,7 +75,7 @@ class Accounts{
                         $responseData = $this->byAddress($street_1,$region,$country,$zip);
                     }
                     if(empty($responseData->error)){ 
-                        $this->saveTaxRate($responseData,$region,$country);
+                        //$this->saveTaxRate($responseData,$region,$country);
                     }
                 } 
             }
@@ -142,7 +142,7 @@ class Accounts{
                 $maxValue = $wpdb->get_results($max);   
                 $i=$maxValue[0]->max_tax_rate+1;  
                  foreach ($responseData->rates as $key => $value){
-                        $taxRate = $value->rate;
+                        $taxRate = number_format($value->rate*100,3);
                         $taxType = $value->type;
                         $sql = "SELECT * FROM ".$table_prefix."woocommerce_tax_rates WHERE tax_rate_country ='".$country."' AND tax_rate_state ='".$region."' AND tax_rate =".$taxRate." AND tax_rate_name ='".$taxType."'";
                         $checkValueExist = $wpdb->get_results($sql);
@@ -265,7 +265,7 @@ class Accounts{
                            
                         }
                         if(empty($responseData->error)){ 
-                            $this->saveTaxRate($responseData,$region,$country);
+                           // $this->saveTaxRate($responseData,$region,$country);
                         }
             }catch(Exception $e){
             $message = $e->getMessage();

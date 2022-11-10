@@ -8,8 +8,25 @@ class AdminSettings{
         //self::getCompanyInfo();
         add_action( 'woocommerce_product_options_general_product_data', array('AdminSettings','woocommerce_product_custom_fields') ); 
         add_action('woocommerce_process_product_meta', array('AdminSettings','save_woocommerce_product_custom_fields')); 
-
+       if(ENABLEAVATAX=="yes"){
+           
+           add_action( 'show_user_profile',array(&$this,'wk_custom_customer_code_field'));
+           add_action( 'edit_user_profile', array(&$this,'wk_custom_customer_code_field'));
+           add_action( 'personal_options_update', array(&$this,'save_avatax_field') );
+           add_action( 'edit_user_profile_update', array(&$this,'save_avatax_field') );
+           add_action('product_cat_add_form_fields', array(&$this,'wh_taxonomy_add_new_meta_field'), 10, 1);
+           add_action('product_cat_edit_form_fields',array(&$this, 'wh_taxonomy_edit_meta_field'), 10, 1);
+           add_action('edited_product_cat',array(&$this,'wh_save_taxonomy_custom_meta'), 10, 1);
+           add_action('create_product_cat',array(&$this, 'wh_save_taxonomy_custom_meta'), 10, 1);
+           add_action( "woocommerce_admin_order_data_after_order_details", array(&$this,'showVatId'),10,1);
+        }
+       
+        
     }
+
+    
+   
+
 
     public function checkWocommerceExistence(){
         if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
@@ -36,11 +53,11 @@ class AdminSettings{
     public static function pluginHtml( $settings, $current_section ) {
 
         if ( $current_section == 'mysettings' ) {
+          
             $settings = array();
-            
+            echo " <br> <a href='https://drive.google.com/file/d/1RGo7ZSb8FuCUv9eDmvwyVjFucavFjkOh/view?usp=sharing' target='_blank'>User Guide</a>";
          
             $settings[] = array( 'name' => __( 'Connection Settings', '' ), 'type' => 'title', 'desc'=>__('Log in to your AvaTax Admin Console to find your connection information.'), 'id' => 'connection' );
-    
             //Account Keys
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ac' );
             $settings[] = array( 'name' => __( 'Account Number'), 'type' => 'text',   'id' => 'ac' );
@@ -57,16 +74,27 @@ class AdminSettings{
                     'sandbox' => __('Development')
                 )
             );
+            $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'select', 'options' => 
+            array(
+
+           
+
+        ), 'class'=>'calc', 'id' => 'companycode');
+         
+
+      
+
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ttv' );
             // Add Title to the Settings
             $settings[] = array( 'name' => __( 'Tax Calculation', 'woorei' ), 'type' => 'title', 'desc' => __( 'The following options are used to configure my options.', 'woorei' ), 'id' => 'mysettings' );
             $settings[] = array( 'type' => 'woorei_dynamic_field_table', 'id' => 'woorei_dynamic_field_table' );
     
             // Add Enable or Disable to the Settings        
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'enable' );
-            $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox',  'desc'=>__('This will override all configured WooCommerce tax rates and replace them with the rates fetched from AvaTax.'), 'id' => 'enable' );
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'avatax_enable' );
+            $settings[] = array( 'name' => __( ' Avatax: Enable/Disable'), 'type' => 'checkbox',  'desc'=>__('This will override all configured WooCommerce tax rates and replace them with the rates fetched from AvaTax.'), 'id' => 'avatax_enable' );
     
             echo '<div class="part">';
+           
             //Record calculation
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'rec', 'class'=>'calc' );
             $settings[] = array( 'name' => __( 'Record Calculations'), 'type' => 'checkbox', 'class'=>'calc', 'desc'=>__('Send permanent calculations in Avalara when orders are placed.'), 'id' => 'rec' );
@@ -74,29 +102,31 @@ class AdminSettings{
             // Commit Transaction
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'commit', 'class'=>'calc' );
             $settings[] = array( 'name' => __( 'Commit Transactions'), 'type' => 'checkbox', 'class'=>'calc', 'desc'=>__(' Set transactions as "committed" when sending to Avalara.'), 'id' => 'commit' );
+            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'debug' );
+            $settings[] = array( 'name' => __( 'Enable Logging'), 'type' => 'checkbox',  'desc'=>__('Log API requests, responses, and errors for debugging.'), 'id' => 'debug' );
+             //Product Tax Code
+             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ptax', 'class'=>'calc' );
+             $settings[] = array( 'name' => __( 'Default Product Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'default_tax_code' );
+     
+             //Shipping Tax Code
+             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'stax', 'class'=>'calc' );
+             $settings[] = array( 'name' => __( 'Default Shipping Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'stax' );
+     
+            // // Supported Location
+            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'loc', 'class'=>'calc' );
+            // $settings[] = array( 'name' => __( 'Supported Locations'), 'type' => 'select', 'options' => 
+            //     array(
     
-            // Supported Location
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'loc', 'class'=>'calc' );
-            $settings[] = array( 'name' => __( 'Supported Locations'), 'type' => 'select', 'options' => 
-                array(
+            //     'top' => __( 'All Locations' ),
+            //     'bottom' => __('Specfic location Only')
     
-                'top' => __( 'All Locations' ),
-                'bottom' => __('Specfic location Only')
-    
-            ), 'class'=>'calc', 'id' => 'loc');
+            // ), 'class'=>'calc', 'id' => 'loc');
              
             //Company Code
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'com', 'class'=>'calc' );
            // $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'com' );
            
-           $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'select', 'options' => 
-                array(
-    
-               
-    
-            ), 'class'=>'calc', 'id' => 'companycode');
-             
-    
+          
     
     
             //Origin Address
@@ -119,28 +149,20 @@ class AdminSettings{
             'id'	=> 'vd-btn');
     
     
+           
+            // //Cart Calculation
+            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cart_cl', 'class'=>'calc' );
+            // $settings[] = array( 'name' => __( 'Cart Calculation'), 'type' => 'select', 'options' => 
+            //     array(
+            //         'no'    => __( 'Do not show calculations on the cart page', 'woocommerce-avatax' ),
+            //         'yes'   => __( 'Show estimated tax rates', 'woocommerce-avatax' ),
+            //         'force' => __( 'Force full tax rate calculation', 'woocommerce-avatax' ),
     
-            //Product Tax Code
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ptax', 'class'=>'calc' );
-            $settings[] = array( 'name' => __( 'Default Product Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'ptax' );
-    
-            //Shipping Tax Code
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'stax', 'class'=>'calc' );
-            $settings[] = array( 'name' => __( 'Default Shipping Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'stax' );
-    
-            //Cart Calculation
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cart_cl', 'class'=>'calc' );
-            $settings[] = array( 'name' => __( 'Cart Calculation'), 'type' => 'select', 'options' => 
-                array(
-                    'no'    => __( 'Do not show calculations on the cart page', 'woocommerce-avatax' ),
-                    'yes'   => __( 'Show estimated tax rates', 'woocommerce-avatax' ),
-                    'force' => __( 'Force full tax rate calculation', 'woocommerce-avatax' ),
-    
-                ), 'id' => 'cart_cl' , 'class'=>'calc');     
+            //     ), 'id' => 'cart_cl' , 'class'=>'calc');     
                 
-            //Non-Us customers
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'non' ,'class'=>'calc');
-            $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox', 'class'=>'calc',  'desc'=>__(' Enable tax calculations on the cart page for international addresses'), 'id' => 'non'   );   
+            // //Non-Us customers
+            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'non' ,'class'=>'calc');
+            // $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox', 'class'=>'calc',  'desc'=>__(' Enable tax calculations on the cart page for international addresses'), 'id' => 'non'   );   
     
             //Enable VAT
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'vat' ,'class'=>'calc');
@@ -167,21 +189,19 @@ class AdminSettings{
     
             
             //cross-Border Classification
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cross' );
-            $settings[] = array( 'name' => __( 'Cross-border classification'), 'type' => 'text',   'id' => 'cross' );
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'sync' );
-            $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox',  'desc'=>__(' Sync products to classify for cross-border duties.'), 'id' => 'sync' );
-            $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'debug' );
-            $settings[] = array( 'name' => __( 'Debug Mode'), 'type' => 'checkbox',  'desc'=>__('Log API requests, responses, and errors for debugging.'), 'id' => 'debug' );
+            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cross' );
+            // $settings[] = array( 'name' => __( 'Cross-border classification'), 'type' => 'text',   'id' => 'cross' );
+            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'sync' );
+            // $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox',  'desc'=>__(' Sync products to classify for cross-border duties.'), 'id' => 'sync' );
             //Vendor
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'vendor' );
             $settings[] = array( 'name' => __( '
             Choose Vendor'), 'type' => 'select',   'id' => 'vendor' , 'options' => 
                 array(
-                    '0' => __( 'Choose Vendor' ),
+                    // '0' => __( 'Choose Vendor' ),
                     'seller' => __( 'Dokan' ),
-                    'm_seller' => __( 'Marketplace' ),
-                    'dc_vendor' => __( 'WCMp' )
+                    // 'm_seller' => __( 'Marketplace' ),
+                    // 'dc_vendor' => __( 'WCMp' )
                 )
             );
 
@@ -218,9 +238,35 @@ class AdminSettings{
     }
 
     public static function woocommerce_product_custom_fields(){
+
+      
+        // $response = Api::curl("/api/v2/companies/".get_option('companyID')."/taxcodes");
+        // ErrorLog::sysLogs("Get tax codes successfully".$response);
+        // $response = json_decode($response, TRUE);
+
+        // $taxcode=array();
+      
+        // foreach($response as  $value){
+            
+        //     $taxcode[$value['taxcode']]= $value['taxcode']."/". $value['description'];
+
+          
+           
+        // }
+       
+        // $field=array(
+        //     'id' => 'woocommerce_custom_taxcode',
+        //     'name' => 'woocommerce_custom_taxcode',
+        //     'class' => 'select short',
+        //     'value'       => get_post_meta( get_the_ID(), 'woocommerce_custom_taxcode', true ),
+        //     'label' => __('Tax Code', 'woocommerce'),
+        //     'options' => $taxcode,
+        //     );
+
+        // woocommerce_wp_select($field);
       $args = array(
           'id' => 'woocommerce_custom_taxcode',
-          'label' => __('Tax code', 'Tax Code'),
+          'label' => __('Avalara Tax code', ' Avalara Tax Code'),
           'placeholder' => __('P0000000', 'P0000000'),
       );
       woocommerce_wp_text_input($args);
@@ -232,5 +278,135 @@ class AdminSettings{
         $product->update_meta_data('woocommerce_custom_taxcode', sanitize_text_field($woocommerce_custom_taxcode));
         $product->save();
     }
+
+ 
+    
+   
+function wk_custom_customer_code_field( $user )
+{
+  
+    $user_roles = $user->roles;
+    if ( in_array( 'customer', $user_roles, true ) ) {
+       
+        echo '<h3 class="heading">Avatax Field</h3>';
+        $customercode=get_the_author_meta( 'avatax_customer_code', $user->ID );
+        $response = Api::curl("api/v2/definitions/entityusecodes");
+       
+        ErrorLog::sysLogs("Get Entityusecodes successfully".$response);
+        $response = json_decode($response, TRUE);
+        
+        if(empty($customercode)){
+            $customercode=$user->ID;
+        }
+        
+        ?>
+        
+        <table class="form-table">
+        <tr>
+                <th><label for="customer_code">Customer Code</label></th>
+            <td><input type="text" class="regular-text" name="avatax_customer_code" id="avatax_customer_code"  value="<?php echo $customercode; ?>"/>
+                    </td>
+        </tr>
+        <tr>
+                <th><label for="customer_code"> Tax Exemption Number</label></th>
+            <td><input type="text" class="regular-text" name="avatax_exemption_number" id="avatax_exemption_number"  value="<?php echo get_the_author_meta( 'avatax_exemption_number', $user->ID ); ?>"/>
+                    </td>
+        </tr>
+        <tr>
+                <th><label for="customer_code">Tax Exempt Category</label></th>
+            <td> <select name="avatax_customer_exempt_reason" class="" id="avatax_customer_exempt_reason">
+                <option value="">Choose one</option>
+                <?php
+                foreach($response['value'] as $value){
+                    $selected = get_the_author_meta( 'avatax_customer_exempt_reason', $user->ID ) == $value['code'] ? 'selected' : '';
+                    echo '<option value="'.$value['code'].'" '.$selected.'>'.$value['code'].'/'.$value['name'].'</option>';
+                }
+                ?>
+            </select>
+                    </td>
+        </tr>
+        </table>
+        
+        <?php
+    }
+       
+}
+
+function save_avatax_field($user_id){
+ 
+    if ( ! empty( $_POST['avatax_customer_code'] )) {
+		update_user_meta( $user_id, 'avatax_customer_code', $_POST['avatax_customer_code']);
+	}
+ 
+		update_user_meta( $user_id, 'avatax_exemption_number', $_POST['avatax_exemption_number']);
+	
+   
+		update_user_meta( $user_id, 'avatax_customer_exempt_reason', $_POST['avatax_customer_exempt_reason']);
+	
+}
+
+
+function wh_taxonomy_add_new_meta_field() {
+    ?>
+        
+    <div class="form-field">
+        <label for="avalara_category_taxcode"><?php _e('Avalara Tax Code', 'atc'); ?></label>
+        <input type="text" name="avalara_category_taxcode" id="">
+       
+    </div>
+   
+    <?php
+}
+
+
+function wh_taxonomy_edit_meta_field($term) {
+
+   
+    $term_id = $term->term_id;
+    $avalara_category_taxcode = get_term_meta($term_id, 'avalara_category_taxcode', true);
+    
+    ?>
+    <tr class="form-field">
+        <th scope="row" valign="top"><label for="avalara_category_taxcode"><?php _e('Avalara Tax Code', 'atc'); ?></label></th>
+        <td>
+            <input type="text" name="avalara_category_taxcode" id="avalara_category_taxcode" value="<?php echo esc_attr($avalara_category_taxcode) ? esc_attr($avalara_category_taxcode) : ''; ?>">
+            
+        </td>
+    </tr>
+    
+    <?php
+}
+
+function wh_save_taxonomy_custom_meta($term_id) {
+
+    $avalara_category_taxcode = filter_input(INPUT_POST, 'avalara_category_taxcode');
+   
+
+    update_term_meta($term_id, 'avalara_category_taxcode', $avalara_category_taxcode);
+}
+   
+public function showVatId($order){  ?>
+<br class="clear" />
+   
+       
+   
+        <div class="address">
+        <?php $orderId = $order->get_id();
+        if(!empty(get_post_meta($orderId,'vat_id',true))){
+            echo '<p><b style="color:black;">'. __('vat id'). '</b> : '. get_post_meta($orderId,'vat_id',true).'</p> <br>';
+            }
+            if(!empty(get_the_author_meta( 'avatax_exemption_number', $order->get_customer_id()))){
+
+                echo '<p><b style="color:black;">'. __('Tax Exemption Number'). '</b> : '. get_the_author_meta( 'avatax_exemption_number', $order->get_customer_id() ).'</p>';
+            }
+            if(!empty(get_the_author_meta( 'avatax_customer_exempt_reason', $order->get_customer_id()))){
+                
+                echo '<p><b style="color:black;">'. __('Tax Exempt Category'). '</b> : '. get_the_author_meta( 'avatax_customer_exempt_reason',$order->get_customer_id()).'</p>';
+            }
+            ?>
+        </div>
+
+<?php }
+       
 
 }

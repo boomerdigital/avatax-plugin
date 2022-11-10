@@ -33,4 +33,8 @@ $debug = get_option('debug');
 define( 'DEBUG', $debug );
 $shippingTax = get_option('shippingTax');
 define( 'SHIPPINGTAX', $shippingTax );
+$enable_avatax = get_option('avatax_enable');
+define( 'ENABLEAVATAX', $enable_avatax );
+$default_tax_code = get_option('default_tax_code');
+define( 'DEFAULTTAXCODE', $default_tax_code );
 ?>
