@@ -10,7 +10,7 @@
 + [Woocomerce](https://wordpress.org/plugins/woocommerce/#description)
 + [Avalara account’s “Account number” and “License key”](https://www.avalara.com/us/en/index.html)
 
-## Instalation
+## Installation
 + Upload \"test-plugin.php\" to the \"/wp-content/plugins/\" directory
 + Activate the plugin through the \"Plugins\" menu in WordPress.
 
