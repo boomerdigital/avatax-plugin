@@ -7,6 +7,7 @@ class DmlFront{
     
     public static function insertAtAddress($response){
         global $wpdb;
+      
         try{
             $wpdb->insert('at_address',array( 
             'address' => serialize(array($response->address)), 

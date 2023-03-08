@@ -19,14 +19,14 @@ class DB{
     public static function createAtCompany(){
         global $wpdb;
         try{
-            $table = 'at_company';
+            $table = $wpdb->prefix.'avatax_company';
             $charset = $wpdb->get_charset_collate();
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
                  `id` int(11) NOT NULL AUTO_INCREMENT,
                  `accountId` int(11) DEFAULT NULL,
                  `companyId` int(11) DEFAULT NULL,
-                 `companyCode` varchar(255) DEFAULT NULL,
+                 `` varchar(255) DEFAULT NULL,
                  `name` varchar(255) DEFAULT NULL,
                  `isDefault` enum('0','1') DEFAULT NULL,
                  `isActive` enum('0','1') DEFAULT NULL,
@@ -61,7 +61,7 @@ class DB{
     public static function createAtTransactions(){
         global $wpdb;
         try{
-            $table = 'at_transactions';
+            $table = $wpdb->prefix.'avatax_transactions';
             $charset = $wpdb->get_charset_collate();
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
@@ -132,7 +132,7 @@ class DB{
     public static function createAtTransactionsLines(){
         global $wpdb;
         try{
-            $table = 'at_transactions_lines';
+            $table = $wpdb->prefix.'avatax_transactions_lines';
             $charset = $wpdb->get_charset_collate();
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
@@ -197,7 +197,7 @@ class DB{
     public static function createAtTransactionsLinesDetails(){
         global $wpdb; 
         try{
-            $table = 'at_transactions_lines_details';
+            $table = $wpdb->prefix.'avatax_transactions_lines_details';
             $charset = $wpdb->get_charset_collate();
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
@@ -270,7 +270,7 @@ class DB{
     public static function createAtTransactionsSummary(){
         global $wpdb;
         try{
-            $table = 'at_transactions_summary';
+            $table = $wpdb->prefix.'avatax_transactions_summary';
             $charset = $wpdb->get_charset_collate();
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
@@ -311,16 +311,16 @@ class DB{
     public static function createAtAddress(){
         global $wpdb;
         try{
-            $table = 'at_address';
+            $table = $wpdb->prefix.'avatax_address';
             $charset = $wpdb->get_charset_collate();
             $charset_collate = $wpdb->get_charset_collate();
             $sql = "CREATE TABLE IF NOT EXISTS $table (
              `id` int(11) NOT NULL AUTO_INCREMENT,
-             `address` varchar(255) NOT NULL,
-             `validatedAddresses` varchar(255) NOT NULL,
-             `coordinates` varchar(255) NOT NULL,
-             `resolutionQuality` varchar(255) NOT NULL,
-             `taxAuthorities` varchar(255) NOT NULL,
+             `address` varchar(500) NOT NULL,
+             `validatedAddresses` varchar(500) NOT NULL,
+             `coordinates` varchar(500) NOT NULL,
+             `resolutionQuality` varchar(500) NOT NULL,
+             `taxAuthorities` text NOT NULL,
              `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ,
              `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
              `deleted_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -357,7 +357,7 @@ class DB{
      public static function insertAtAddress($response){
         global $wpdb;
         try{
-            $wpdb->insert('at_address',array( 
+            $wpdb->insert($wpdb->prefix.'avatax_address',array( 
             'address' => serialize(array($response->address)), 
             'validatedAddresses' => serialize($response->validatedAddresses), 
             'coordinates' => serialize(array($response->coordinates)), 
@@ -375,7 +375,7 @@ class DB{
     
     public static function deactivate() {
         global $wpdb;
-         $tableArray = ["at_address","at_company","at_transactions","at_transactions_lines","at_transactions_lines_details","at_transactions_summary",$wpdb->prefix . "user_data"];
+         $tableArray = [$wpdb->prefix."avatax_address",$wpdb->prefix."avatax_company",$wpdb->prefix."avatax_transactions",$wpdb->prefix."avatax_transactions_lines",$wpdb->prefix."avatax_transactions_lines_details",$wpdb->prefix."avatax_transactions_summary",$wpdb->prefix . "user_data"];
 
       foreach ($tableArray as $tablename) {
          $wpdb->query("DROP TABLE IF EXISTS $tablename");
