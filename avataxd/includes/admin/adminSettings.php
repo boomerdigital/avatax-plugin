@@ -3,38 +3,69 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class AdminSettings{
     public function __construct(){
         $this->checkWocommerceExistence();
-        add_filter( 'woocommerce_get_sections_tax', array('AdminSettings','addCustomMenu') );
-        add_filter( 'woocommerce_get_settings_tax', array('AdminSettings','pluginHtml'), 10, 2 );
-        //self::getCompanyInfo();
-        add_action( 'woocommerce_product_options_general_product_data', array('AdminSettings','woocommerce_product_custom_fields') ); 
-        add_action('woocommerce_process_product_meta', array('AdminSettings','save_woocommerce_product_custom_fields')); 
+        add_filter( 'woocommerce_get_sections_tax', array('AdminSettings','avatax_addCustomMenu') );
+        add_filter( 'woocommerce_get_settings_tax', array('AdminSettings','avatax_pluginHtml'), 10, 2 );
+        add_action( 'woocommerce_product_options_general_product_data', array('AdminSettings','avatax_product_custom_fields') ); 
+        add_action('woocommerce_process_product_meta', array('AdminSettings','save_avatax_product_custom_fields')); 
        if(ENABLEAVATAX=="yes"){
            
-           add_action( 'show_user_profile',array(&$this,'wk_custom_customer_code_field'));
-           add_action( 'edit_user_profile', array(&$this,'wk_custom_customer_code_field'));
+           add_action( 'show_user_profile',array(&$this,'avatax_custom_customer_code_field'));
+           add_action( 'edit_user_profile', array(&$this,'avatax_custom_customer_code_field'));
            add_action( 'personal_options_update', array(&$this,'save_avatax_field') );
            add_action( 'edit_user_profile_update', array(&$this,'save_avatax_field') );
-           add_action('product_cat_add_form_fields', array(&$this,'wh_taxonomy_add_new_meta_field'), 10, 1);
-           add_action('product_cat_edit_form_fields',array(&$this, 'wh_taxonomy_edit_meta_field'), 10, 1);
-           add_action('edited_product_cat',array(&$this,'wh_save_taxonomy_custom_meta'), 10, 1);
-           add_action('create_product_cat',array(&$this, 'wh_save_taxonomy_custom_meta'), 10, 1);
-           add_action( "woocommerce_admin_order_data_after_order_details", array(&$this,'showVatId'),10,1);
+           add_action('product_cat_add_form_fields', array(&$this,'avatax_taxonomy_add_new_meta_field'), 10, 1);
+           add_action('product_cat_edit_form_fields',array(&$this, 'avatax_taxonomy_edit_meta_field'), 10, 1);
+           add_action('edited_product_cat',array(&$this,'avatax_save_taxonomy_custom_meta'), 10, 1);
+           add_action('create_product_cat',array(&$this, 'avatax_save_taxonomy_custom_meta'), 10, 1);
+           add_action( "woocommerce_admin_order_data_after_order_details", array(&$this,'avatax_showVatId'),10,1);
         }
        
         
     }
 
-    
-   
+    public function getVendors(){
+        $vendor=array();
+        $vendor['standalone']='Standalone';
+      
 
+        if ( in_array( 'dokan-lite/dokan.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['dokan']='dokan';
+        }
+        if ( in_array( 'wc-vendors/class-wc-vendors.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['wc-vendors']='wc-vendors';
+        }
+        if ( in_array( 'wcfmmp/wcfmmp.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['wcfmmp']='wcfmmp';
+        }
+        if ( in_array( 'wcmp-frontend_product_manager/wcmp_frontend_product_manager.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['wcmp']='wcmp';
+        }
+        if ( in_array( 'dc-woocommerce-multi-vendor/dc_product_vendor.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['multivendorx']='Multivendorx';
+        }
+        if ( in_array( 'woocommerce-product-vendors/woocommerce-product-vendors.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['woocommerce-product-vendors']='woocommerce-product-vendors';
+        }
+        if ( in_array( 'yith-woocommerce-product-vendors/init.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['yith-woocommerce-product-vendors']='yith-woocommerce-product-vendors';
+        }
+        if ( in_array( 'wcfmmarketplace/wcfmmarketplace.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['wcfmmarketplace']='wcfmmarketplace';
+        }
+        if ( in_array( 'wcfmgs/wcfmgs.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+            $vendor['wcfmgs']='wcfmgs';
+        }
 
+        apply_filters('avatax_vendor',$vendor);
+        return $vendor;
+    }
     public function checkWocommerceExistence(){
         if ( ! in_array( 'woocommerce/woocommerce.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
-            add_action('admin_notices', array($this,'adminNotice'));
+            add_action('admin_notices', array($this,'avatax_adminNotice'));
         }
     }
 
-    public function adminNotice() {
+    public function avatax_adminNotice() {
         global $pagenow;
         
         if ( $pagenow == 'options-general.php' ) {
@@ -45,12 +76,12 @@ class AdminSettings{
         }
     }
 
-    public static function addCustomMenu( $sections ) {
+    public static function avatax_addCustomMenu( $sections ) {
         $sections['mysettings'] = __( 'Custom Avatax', 'custom' );
         return $sections;
     }
 
-    public static function pluginHtml( $settings, $current_section ) {
+    public static function avatax_pluginHtml( $settings, $current_section ) {
 
         if ( $current_section == 'mysettings' ) {
           
@@ -112,16 +143,6 @@ class AdminSettings{
              $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'stax', 'class'=>'calc' );
              $settings[] = array( 'name' => __( 'Default Shipping Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'stax' );
      
-            // // Supported Location
-            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'loc', 'class'=>'calc' );
-            // $settings[] = array( 'name' => __( 'Supported Locations'), 'type' => 'select', 'options' => 
-            //     array(
-    
-            //     'top' => __( 'All Locations' ),
-            //     'bottom' => __('Specfic location Only')
-    
-            // ), 'class'=>'calc', 'id' => 'loc');
-             
             //Company Code
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'com', 'class'=>'calc' );
            // $settings[] = array( 'name' => __( 'Company Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'com' );
@@ -148,22 +169,7 @@ class AdminSettings{
             'class' => 'button-secondary',
             'id'	=> 'vd-btn');
     
-    
-           
-            // //Cart Calculation
-            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cart_cl', 'class'=>'calc' );
-            // $settings[] = array( 'name' => __( 'Cart Calculation'), 'type' => 'select', 'options' => 
-            //     array(
-            //         'no'    => __( 'Do not show calculations on the cart page', 'woocommerce-avatax' ),
-            //         'yes'   => __( 'Show estimated tax rates', 'woocommerce-avatax' ),
-            //         'force' => __( 'Force full tax rate calculation', 'woocommerce-avatax' ),
-    
-            //     ), 'id' => 'cart_cl' , 'class'=>'calc');     
-                
-            // //Non-Us customers
-            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'non' ,'class'=>'calc');
-            // $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox', 'class'=>'calc',  'desc'=>__(' Enable tax calculations on the cart page for international addresses'), 'id' => 'non'   );   
-    
+
             //Enable VAT
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'vat' ,'class'=>'calc');
             $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox', 'class'=>'calc',  'desc'=>__('Allow customers to input their VAT ID during checkout'), 'id' => 'vat'   );
@@ -187,23 +193,13 @@ class AdminSettings{
                     'bottom' => __('Specfic location Only')
                 ), 'id' => 'sloc','multiple'=>'multiple' );
     
-            
-            //cross-Border Classification
-            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'cross' );
-            // $settings[] = array( 'name' => __( 'Cross-border classification'), 'type' => 'text',   'id' => 'cross' );
-            // $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'sync' );
-            // $settings[] = array( 'name' => __( 'Enable/Disable'), 'type' => 'checkbox',  'desc'=>__(' Sync products to classify for cross-border duties.'), 'id' => 'sync' );
+
             //Vendor
+            $vendors=self::getVendors();
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'vendor' );
             $settings[] = array( 'name' => __( '
             Choose Vendor'), 'type' => 'select',   'id' => 'vendor' , 'options' => 
-                array(
-                    // '0' => __( 'Choose Vendor' ),
-                    'seller' => __( 'Dokan' ),
-                    // 'm_seller' => __( 'Marketplace' ),
-                    // 'dc_vendor' => __( 'WCMp' )
-                )
-            );
+            $vendors);
 
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'shippingTax' );
             $settings[] = array( 'name' => __( 'Shipping Tax'), 'type' => 'checkbox',  'desc'=>__('Enable Shipping Tax.'), 'id' => 'shippingTax' );
@@ -237,7 +233,7 @@ class AdminSettings{
         
     }
 
-    public static function woocommerce_product_custom_fields(){
+    public static function avatax_product_custom_fields(){
 
       
         // $response = Api::curl("/api/v2/companies/".get_option('companyID')."/taxcodes");
@@ -272,7 +268,7 @@ class AdminSettings{
       woocommerce_wp_text_input($args);
     }
 
-    public static function save_woocommerce_product_custom_fields($post_id){
+    public static function save_avatax_product_custom_fields($post_id){
         $product = wc_get_product($post_id);
         $woocommerce_custom_taxcode = isset($_POST['woocommerce_custom_taxcode']) ? $_POST['woocommerce_custom_taxcode'] : '';
         $product->update_meta_data('woocommerce_custom_taxcode', sanitize_text_field($woocommerce_custom_taxcode));
@@ -282,7 +278,7 @@ class AdminSettings{
  
     
    
-function wk_custom_customer_code_field( $user )
+function avatax_custom_customer_code_field( $user )
 {
   
     $user_roles = $user->roles;
@@ -346,7 +342,7 @@ function save_avatax_field($user_id){
 }
 
 
-function wh_taxonomy_add_new_meta_field() {
+function avatax_taxonomy_add_new_meta_field() {
     ?>
         
     <div class="form-field">
@@ -359,7 +355,7 @@ function wh_taxonomy_add_new_meta_field() {
 }
 
 
-function wh_taxonomy_edit_meta_field($term) {
+function avatax_taxonomy_edit_meta_field($term) {
 
    
     $term_id = $term->term_id;
@@ -377,7 +373,7 @@ function wh_taxonomy_edit_meta_field($term) {
     <?php
 }
 
-function wh_save_taxonomy_custom_meta($term_id) {
+function avatax_save_taxonomy_custom_meta($term_id) {
 
     $avalara_category_taxcode = filter_input(INPUT_POST, 'avalara_category_taxcode');
    
@@ -385,7 +381,7 @@ function wh_save_taxonomy_custom_meta($term_id) {
     update_term_meta($term_id, 'avalara_category_taxcode', $avalara_category_taxcode);
 }
    
-public function showVatId($order){  ?>
+public function avatax_showVatId($order){  ?>
 <br class="clear" />
    
        

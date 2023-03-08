@@ -3,7 +3,7 @@ if ( ! defined( 'ABSPATH' ) ) exit;
 class Ajax{
 
     public function __construct(){
-       // add_action( 'template_redirect', array(&$this,'createTransaction') );
+
         add_action("wp_ajax_locations" , array(&$this,'locations'));
         add_action("wp_ajax_nopriv_locations" , array(&$this,'locations'));
         add_action("wp_head" , array(&$this,'setAdminAjax'));
@@ -20,8 +20,8 @@ class Ajax{
         add_action("wp_ajax_saveCountries" , array(&$this,'saveCountries'));
         add_action("wp_ajax_nopriv_saveCountries" , array(&$this,'saveCountries'));
         add_action("wp_ajax_saveData" , array(&$this,'saveData'));
-        add_action("wp_ajax_nopriv_saveData" , array(&$this,'saveData'));   
-        
+        add_action("wp_ajax_nopriv_saveData" , array(&$this,'saveData'));  
+       
        if(ENABLEAVATAX=="yes"){
 
            add_action( 'woocommerce_calculated_total', array(&$this,'avatax_calculate_taxes'),10,2);
@@ -32,30 +32,53 @@ class Ajax{
         }
         
     }
+    
    
     public function get_vendor_address($vendor_id){
-    
-        $response=$this->getDefaultWoocommerceAddress();
-        $response['store_name']= get_bloginfo( 'name' );
-        if ( in_array( 'dokan-lite/dokan.php', apply_filters( 'active_plugins', get_option( 'active_plugins' ) ) ) ) {
+        $vendor=get_option('vendor');
+        global $wpdb;
+        $table_prefix = $wpdb->prefix;
+        $response=array();
 
-            global $wpdb;
-            $table_prefix = $wpdb->prefix;
-            $wp_usermeta = $table_prefix.'usermeta';
-            $vendorAddress = $wpdb->get_results("SELECT meta_value FROM ".$table_prefix."usermeta WHERE user_id=".$vendor_id." AND meta_key='dokan_profile_settings'");
-            if($vendorAddress!=null){
+        switch ($vendor) {
+            case 'dokan':
+                $vendorAddress=get_user_meta($vendor_id,'dokan_profile_settings', true);
+                if($vendorAddress!=null){
+                
+
+                    $response['street_1']=$vendorAddress['address']['street_1'];
+                    $response['street_2']=$vendorAddress['address']['street_2'];
+                    $response['city']=$vendorAddress['address']['city'];
+                    $response['region']=$vendorAddress['address']['state'];
+                    $response['country']=$vendorAddress['address']['country'];
+                    $response['zip']=$vendorAddress['address']['zip'];
+                    $response['store_name']=$vendorAddress['store_name'];
+        
+                }else{
+                    $response = $this->getDefaultWoocommerceAddress();
+                    $response['store_name']= get_bloginfo( 'name' );
+                }
+                break;
+                
+                
+            case 'wc':
+                break;
             
-                $data = unserialize($vendorAddress[0]->meta_value);
-                $response['street_1']=$data['address']['street_1'];
-                $response['street_2']=$data['address']['street_2'];
-                $response['city']=$data['address']['city'];
-                $response['region']=$data['address']['state'];
-                $response['country']=$data['address']['country'];
-                $response['zip']=$data['address']['zip'];
-                $response['store_name']=$data['store_name'];
-
-            }
+            case 'multivendorx':
+                $response['street_1']=get_user_meta($vendor_id,'_vendor_address_1', true);
+                $response['street_2']=get_user_meta($vendor_id,'_vendor_address_2', true);
+                $response['city']=get_user_meta($vendor_id,'_vendor_city', true);
+                $response['region']=get_user_meta($vendor_id,'_vendor_state_code', true);
+                $response['country']=get_user_meta($vendor_id,'_vendor_country_code', true);
+                $response['zip']=get_user_meta($vendor_id,'_vendor_postcode', true);
+                $response['store_name']=get_user_meta( $vendor_id, '_vendor_page_title', true );
+                break;
+            default:
+                $response = $this->getDefaultWoocommerceAddress();
+                $response['store_name']= get_bloginfo( 'name' );
+                break;
         }
+    
 
         return $response;
     }
@@ -80,6 +103,7 @@ class Ajax{
 
     
     function avatax_calculate_taxes( $total, $cart ) { 
+ 
         $totalr=$total;
         $linesArray=[];
         $tempArray = [];
@@ -98,7 +122,13 @@ class Ajax{
         $customer_code=($customer_code=="")?$woocommerce->customer->ID:$customer_code;
     
         $i=0;
+       $array=(array) $cart;
+        unset($array['cart_contents']);
+        unset($array['removed_cart_contents']);
+        unset($array['applied_coupons']);
        
+
+        //var_dump( WC()->session->get( 'chosen_shipping_methods' )); die;
 
             foreach ($cart->cart_contents as $key => $value) {
             
@@ -147,7 +177,6 @@ class Ajax{
                 );
             }
 
-        
                 $tempArray['lines'] = $linesArray;
                 $tempArray['type'] = "SalesOrder";
                 $tempArray['companyCode'] =COMPANYCODE;
@@ -162,11 +191,12 @@ class Ajax{
                 $response = Api::curl("api/v2/transactions/create",'POST',$new);
                 ErrorLog::sysLogs("Transactions create successfully".$response);
                 $response = json_decode($response);
-                
                 $cart->taxes= array((float) $response->totalTax);
-                $total=(float)($response->totalAmount)-$response->totalDiscount;
+                $shipping=$cart->shipping_total;
+                $total=(float)($response->totalAmount+$response->totalTax+$shipping)-$response->totalDiscount;
+               
                 if($total==0){
-                   $total=(float)($totalr+$response->totalTax)-$cart->get_discount_total();
+                   $total=(float)($totalr+$response->totalTax+$shipping)-$cart->get_discount_total();
                 }
         
         return $total;
@@ -188,7 +218,8 @@ public function createTransaction($order_id){
             $include=true;
         }else{
             $include=false;
-        }
+       }
+      
         $countries=get_option('supported_countries');
         $search= array(0 , $order->get_shipping_country());
         $customer_code=get_the_author_meta( 'avatax_customer_code', $order->get_customer_id() );
@@ -516,6 +547,12 @@ public function createTransaction($order_id){
                 'zip'=>$response->value[0]->postalCode,
 
             ];
+            
+            $woocommerce_default_country = $response->value[0]->country.':'.$response->value[0]->region;
+            update_option( 'woocommerce_store_address',$response->value[0]->line1);
+            update_option( 'woocommerce_default_country',$woocommerce_default_country);
+            update_option( 'woocommerce_store_city',$response->value[0]->city);
+            update_option( 'woocommerce_store_postcode',$response->value[0]->postalCode);
             
             $response =  Dml::companyAdminDetail($array);
             echo json_encode($array); die();

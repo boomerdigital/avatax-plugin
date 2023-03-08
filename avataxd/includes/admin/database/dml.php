@@ -8,7 +8,7 @@ class Dml{
     public static function insertAtCompany($response){
         global $wpdb;
         try{
-            $checkValueExist=$wpdb->get_results("SELECT * FROM at_company WHERE companyId=".$response['value'][0]['id']);
+            $checkValueExist=$wpdb->get_results("SELECT * FROM  {$wpdb->prefix}avatax_company WHERE companyId=".$response['value'][0]['id']);
             if(count($checkValueExist) == 0){
                 if (isset($response['value'][0]['settings']) && is_array($response['value'][0]['settings'])) {
                     $settings = $response['value'][0]['settings'];
@@ -16,7 +16,7 @@ class Dml{
                     $settings = array();
                 }
                 if(!empty($response['value'][0]['id']) && !empty($response['value'][0]['accountId'])){
-                $wpdb->insert('at_company',array( 
+                $wpdb->insert($wpdb->prefix.'avatax_company',array( 
                     'companyId' => $response['value'][0]['id'], 
                     'accountId' => $response['value'][0]['accountId'], 
                     'companyCode' => $response['value'][0]['companyCode'], 
@@ -51,9 +51,9 @@ class Dml{
     public static function insertAtTransactions($response,$productId,$order_id){
         global $wpdb;
         try{
-            $checkValueExist=$wpdb->get_results("SELECT * FROM at_transactions WHERE product_id =".$productId." AND order_id =".$order_id);
+            $checkValueExist=$wpdb->get_results("SELECT * FROM {$wpdb->prefix}avatax_transactions WHERE product_id =".$productId." AND order_id =".$order_id);
             if(count($checkValueExist) == 0){
-                $wpdb->insert('at_transactions',array( 
+                $wpdb->insert($wpdb->prefix.'avatax_transactions',array( 
                     'transactions_id' => $response->id,
                     'product_id' => $productId,
                     'order_id' => $order_id,
@@ -120,9 +120,9 @@ class Dml{
      public static function insertAtTransactionsLines($response,$productId,$order_id){
         global $wpdb;
         try{
-            $checkValueExist=$wpdb->get_results("SELECT * FROM at_transactions_lines WHERE product_id =".$productId." AND order_id =".$order_id);
+            $checkValueExist=$wpdb->get_results("SELECT * FROM {$wpdb->prefix}avatax_transactions_lines WHERE product_id =".$productId." AND order_id =".$order_id);
             if(count($checkValueExist) == 0){
-                $wpdb->insert('at_transactions_lines',array( 
+                $wpdb->insert($wpdb->prefix.'avatax_transactions_lines',array( 
                     'lines_id' => $response->id,
                     'product_id' => $productId,
                     'order_id' => $order_id,
@@ -182,9 +182,9 @@ class Dml{
      public static function insertAtTransactionsLinesDetails($response,$productId,$order_id){
         global $wpdb;
         try{
-            $checkValueExist=$wpdb->get_results("SELECT * FROM at_transactions_lines_details WHERE product_id =".$productId." AND order_id =".$order_id);
+            $checkValueExist=$wpdb->get_results("SELECT * FROM {$wpdb->prefix}avatax_transactions_lines_details WHERE product_id =".$productId." AND order_id =".$order_id);
             if(count($checkValueExist) == 0){
-                $wpdb->insert('at_transactions_lines_details',array( 
+                $wpdb->insert($wpdb->prefix.'avatax_transactions_lines_details',array( 
                     'transactions_lines_details_id' => $response->id,
                     'product_id' => $productId,
                     'order_id' => $order_id,
@@ -250,9 +250,9 @@ class Dml{
     public static function insertAtTransactionsSummary($response,$transactionsId,$productId,$order_id){
         global $wpdb;
         try{
-            $checkValueExist=$wpdb->get_results("SELECT * FROM at_transactions_summary WHERE product_id =".$productId." AND order_id =".$order_id);
+            $checkValueExist=$wpdb->get_results("SELECT * FROM {$wpdb->prefix}avatax_transactions_summary WHERE product_id =".$productId." AND order_id =".$order_id);
             if(count($checkValueExist) == 0){
-                $wpdb->insert('at_transactions_summary',array( 
+                $wpdb->insert($wpdb->prefix.'avatax_transactions_summary',array( 
                         'transaction_id' => $transactionsId,
                         'product_id' => $productId,
                         'order_id' => $order_id,
@@ -297,9 +297,9 @@ class Dml{
     public static function updateAtTransactionsCommitStatus($commit,$transactionsId,$transactionsCode,$productId,$order_id){
         global $wpdb;
         try{
-            $checkValueExist=$wpdb->get_results("SELECT * FROM at_transactions WHERE product_id =".$productId." AND order_id =".$order_id);
+            $checkValueExist=$wpdb->get_results("SELECT * FROM {$wpdb->prefix}avatax_transactions WHERE product_id =".$productId." AND order_id =".$order_id);
                 if(count($checkValueExist) != 0){
-                  $wpdb->query($wpdb->prepare("UPDATE at_transactions SET status='Committed' WHERE product_id = ".$productId." AND order_id = ".$order_id." AND transactions_id = ".$transactionsId));
+                  $wpdb->query($wpdb->prepare("UPDATE {$wpdb->prefix}avatax_transactions SET status='Committed' WHERE product_id = ".$productId." AND order_id = ".$order_id." AND transactions_id = ".$transactionsId));
                 }
         }catch(Exception $e){
             $message = $e->getMessage();

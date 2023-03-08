@@ -1,4 +1,5 @@
 <?php
+global $avataxplugin;
 define( 'PLUGINNAME', 'Avatax Custom' );
 define( 'PLUGINPATH', ABSPATH . 'wp-content/plugins/' );
 define( 'AVATAXPLUGINPATH', PLUGINPATH.'avataxd/' );
@@ -37,4 +38,6 @@ $enable_avatax = get_option('avatax_enable');
 define( 'ENABLEAVATAX', $enable_avatax );
 $default_tax_code = get_option('default_tax_code');
 define( 'DEFAULTTAXCODE', $default_tax_code );
+$avatax_vendor=get_option('vendor');
+define( 'AVATAXVENDOR', $avatax_vendor );
 ?>

@@ -30,7 +30,7 @@ function getAllCountries(){
     jQuery.ajax({
         type: "GET",
         url: admin_ajax_url.ajax_url,
-        data: {action: "getCountriesList"},
+        data: {action: "getCountriesList",'_ajax_nonce':admin_ajax_url._ajax_nonce,},
         success: function(msg){
             
             var loc = JSON.parse(msg);
@@ -60,7 +60,7 @@ function getCompanyList(){
     jQuery.ajax({
         type: "GET",
         url: admin_ajax_url.ajax_url,
-        data: {action: "returnCompanies"},
+        data: {action: "returnCompanies",'_ajax_nonce':admin_ajax_url._ajax_nonce},
         dataType: "json",
         success: function(data){
             
@@ -98,7 +98,7 @@ function updateUserAjax(){
     jQuery.ajax({
         type: "GET",
         url: admin_ajax_url.ajax_url,
-        data: {action: "updateUserAjax"},
+        data: {action: "updateUserAjax",'_ajax_nonce':admin_ajax_url._ajax_nonce},
         success: function(msg){
 
         }

@@ -29,7 +29,7 @@ jQuery(document).ready(function($){
             jQuery.ajax({
                 type: "POST",
                 url: admin_ajax_url.ajax_url,
-                data: { action: 'shippingTax',"shippingTaxValue":'1'},
+                data: { action: 'shippingTax',"shippingTaxValue":'1','_ajax_nonce':admin_ajax_url._ajax_nonce},
                 success: function(msg){
                 }
             });
@@ -37,7 +37,11 @@ jQuery(document).ready(function($){
             jQuery.ajax({
                 type: "POST",
                 url: admin_ajax_url.ajax_url,
-                data: { action: 'shippingTax',"shippingTaxValue":'0'},
+                data: {
+                     action: 'shippingTax',
+                     "shippingTaxValue":'0',
+                     '_ajax_nonce':admin_ajax_url._ajax_nonce,
+            },
                 success: function(msg){
                 }
             });
@@ -60,7 +64,7 @@ jQuery(document).ready(function($){
             jQuery.ajax({
                 type: "POST",
                 url: admin_ajax_url.ajax_url,
-                data: { action: 'saveData',"countries":slocation,"CompanyCode":CompanyCode,"CompanyID":CompanyID},
+                data: { action: 'saveData',"countries":slocation,"CompanyCode":CompanyCode,"CompanyID":CompanyID,'_ajax_nonce':admin_ajax_url._ajax_nonce},
                 success: function(msg){
                 }
             });
@@ -81,7 +85,7 @@ jQuery(document).ready(function($){
         jQuery.ajax({
             type: "POST",
             url: admin_ajax_url.ajax_url,
-            data: {action: "getAddressCompany",CompanyID:CompanyID,accountId:accountId,licenseKey:licenseKey,env:env},
+            data: {action: "getAddressCompany",CompanyID:CompanyID,accountId:accountId,licenseKey:licenseKey,env:env,'_ajax_nonce':admin_ajax_url._ajax_nonce},
             dataType: "json",
             success: function(data){
                 if (data != null){
@@ -104,7 +108,7 @@ jQuery(document).ready(function($){
     jQuery.ajax({
         type: "POST",
         url: admin_ajax_url.ajax_url,
-        data: { action: 'verifyAccount',"accountId":accountId,"licenseKey":licenseKey,"env":env},	
+        data: { action: 'verifyAccount',"accountId":accountId,"licenseKey":licenseKey,"env":env,'_ajax_nonce':admin_ajax_url._ajax_nonce},	
         success: function(msg){
             let data=JSON.parse(msg);
             if(data.status=="success"){

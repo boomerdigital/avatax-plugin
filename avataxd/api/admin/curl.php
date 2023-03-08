@@ -2,9 +2,11 @@
 if ( ! defined( 'ABSPATH' ) ) exit;
 class Api{ 
 
+
     public static function curl($url, $method = "GET" ,$data = array()){
+        global $avataxplugin;
         $curl = curl_init();
-        $app_name='BOOMER; 1.0; API REST;V2;'.gethostname();
+        $app_name=$avataxplugin['plugin_name'].$avataxplugin['plugin_version'].' API REST;V2;'.gethostname();
         if(isset($data['apiKey'])){
            
             $header= array('Content-type: application/json',$app_name.';',
@@ -56,11 +58,6 @@ class Api{
         
     }
 
-    public static function getHeader(){
-        
-        return array('Content-type: application/json',
-                              'Authorization: Basic MjAwMDAwMzEwODozMTgyQTc2M0I0NTVFNDA2');
-
-    }
+   
 }
 ?>
