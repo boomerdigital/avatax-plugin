@@ -50,7 +50,6 @@ jQuery(document).ready(function($){
     jQuery(document).on("click",".woocommerce-save-button",function(e){
       
 
-      
         const urlString=window.location.search;
         let paramString = urlString.split('?')[1];
         let queryString = new URLSearchParams(paramString);
@@ -66,6 +65,7 @@ jQuery(document).ready(function($){
                 url: admin_ajax_url.ajax_url,
                 data: { action: 'saveData',"countries":slocation,"CompanyCode":CompanyCode,"CompanyID":CompanyID,'_ajax_nonce':admin_ajax_url._ajax_nonce},
                 success: function(msg){
+                 
                 }
             });
         }

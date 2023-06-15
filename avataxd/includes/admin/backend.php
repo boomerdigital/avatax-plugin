@@ -9,7 +9,7 @@ class Accounts{
             add_action( 'user_register', array(&$this,'vendorRegistrator'), 10, 1);
         }
        
-        if(get_option('vendor')=='0'){
+        if(get_option('vendor')=='standalone'){
            
             $this->setWooAddressByAdmin();
             update_option('woocommerce_tax_based_on','base');
@@ -81,7 +81,7 @@ class Accounts{
             }
         }catch(Exception $e){
             $message = $e->getMessage();
-            ErrorLog::errorLogs($message);
+         a   ErrorLog::errorLogs($message);
         }
     }
 
@@ -133,6 +133,45 @@ class Accounts{
         }
     }
 
+    public function updateTaxRate($data){
+        global $wpdb;
+        $table_prefix = $wpdb->prefix;
+        $sql = "SELECT * FROM ".$table_prefix."woocommerce_tax_rates WHERE tax_rate_country ='".$data['country']."' AND tax_rate_state ='".$data['region']."' AND tax_rate =".$data['taxRate']." AND tax_rate_name ='".$data['taxName']."'";
+        $checkValueExist = $wpdb->get_results($sql);
+        if(count($checkValueExist) == 0){
+          $wpdb->insert($table_prefix."woocommerce_tax_rates",array( 
+            'tax_rate' => $data['taxRate'], 
+            'tax_rate_name' => $data['taxName'], 
+            'tax_rate_country' => $data['country'], 
+            'tax_rate_state' => $data['region'], 
+            'tax_rate_priority' => 1, 
+            'tax_rate_compound' => 0, 
+            'tax_rate_shipping' => 0, 
+            'tax_rate_order' => 0
+           ), 
+            array('%s','%s','%s','%s','%d','%d','%d','%d') 
+            );
+            return $wpdb->insert_id;
+        }else{
+            if($data['taxRate'] != $checkValueExist[0]->tax_rate || $data['taxName'] != $checkValueExist[0]->tax_rate_name)
+            $wpdb->update($table_prefix."woocommerce_tax_rates",array( 
+            'tax_rate' => $data['taxRate'], 
+            'tax_rate_name' => $data['taxName'], 
+            'tax_rate_country' => $data['country'], 
+            'tax_rate_state' => $data['region'], 
+            'tax_rate_priority' => 1, 
+            'tax_rate_compound' => 0, 
+            'tax_rate_shipping' => 0, 
+            'tax_rate_order' => 0
+           ), 
+            array('%s','%s','%s','%s','%d','%d','%d','%d') 
+            );
+            return $wpdb->insert_id;
+        }
+        
+        $checkValueExist[0]->tax_rate_id;
+    }
+
     public function saveTaxRate($responseData,$region,$country){
         global $wpdb;
         try{
@@ -161,7 +200,7 @@ class Accounts{
                             );
                             $i++;                               
                         } 
-                    }
+                    }//
             }
         }catch(Exception $e){
             $message = $e->getMessage();

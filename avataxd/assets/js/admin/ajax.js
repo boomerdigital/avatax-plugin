@@ -112,4 +112,6 @@ function updateUserAjax(){
 function renderButton(){
     let button=' <br><br> <input  id="testc" class="button-primary woocommerce-save-button" type="button" value="Test Connection">';
     jQuery("#env").after(button);
+    let a="<a href='https://drive.google.com/file/d/1RGo7ZSb8FuCUv9eDmvwyVjFucavFjkOh/view?usp=sharing' target='_blank'>User Guide</a>";
+    jQuery("#connection-description p").after(a);
    }

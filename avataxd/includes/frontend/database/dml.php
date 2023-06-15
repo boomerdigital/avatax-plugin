@@ -9,7 +9,7 @@ class DmlFront{
         global $wpdb;
       
         try{
-            $wpdb->insert('at_address',array( 
+            $wpdb->insert('avatax_address',array( 
             'address' => serialize(array($response->address)), 
             'validatedAddresses' => serialize($response->validatedAddresses), 
             'coordinates' => serialize(array($response->coordinates)), 

@@ -23,7 +23,8 @@ class AdminSettings{
         
     }
 
-    public function getVendors(){
+    
+    public  static function getVendors(){
         $vendor=array();
         $vendor['standalone']='Standalone';
       
@@ -65,7 +66,7 @@ class AdminSettings{
         }
     }
 
-    public function avatax_adminNotice() {
+    public  static function avatax_adminNotice() {
         global $pagenow;
         
         if ( $pagenow == 'options-general.php' ) {
@@ -77,7 +78,7 @@ class AdminSettings{
     }
 
     public static function avatax_addCustomMenu( $sections ) {
-        $sections['mysettings'] = __( 'Custom Avatax', 'custom' );
+        $sections['mysettings'] = __( 'Avatax Settings', 'custom' );
         return $sections;
     }
 
@@ -86,8 +87,9 @@ class AdminSettings{
         if ( $current_section == 'mysettings' ) {
           
             $settings = array();
-            echo " <br> <a href='https://drive.google.com/file/d/1RGo7ZSb8FuCUv9eDmvwyVjFucavFjkOh/view?usp=sharing' target='_blank'>User Guide</a>";
+            //echo " <br> <a href='https://drive.google.com/file/d/1RGo7ZSb8FuCUv9eDmvwyVjFucavFjkOh/view?usp=sharing' target='_blank'>User Guide</a>";
          
+            $settings[] = array( 'name' => __( 'User Guide', '' ), 'type' => 'title', 'desc'=>__("<a href='https://drive.google.com/file/d/1RGo7ZSb8FuCUv9eDmvwyVjFucavFjkOh/view?usp=sharing' target='_blank'>User Guide</a>"), 'id' => 'userguide' );
             $settings[] = array( 'name' => __( 'Connection Settings', '' ), 'type' => 'title', 'desc'=>__('Log in to your AvaTax Admin Console to find your connection information.'), 'id' => 'connection' );
             //Account Keys
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'ac' );
@@ -140,8 +142,8 @@ class AdminSettings{
              $settings[] = array( 'name' => __( 'Default Product Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'default_tax_code' );
      
              //Shipping Tax Code
-             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'stax', 'class'=>'calc' );
-             $settings[] = array( 'name' => __( 'Default Shipping Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'stax' );
+             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'woocommerce_avatax_shipping_taxcode', 'class'=>'calc' );
+             $settings[] = array( 'name' => __( 'Default Shipping Tax Code'), 'type' => 'text', 'class'=>'calc', 'id' => 'woocommerce_avatax_shipping_taxcode' );
      
             //Company Code
             $settings[] = array( 'name' => __( '' ), 'type' => 'title',  'id' => 'com', 'class'=>'calc' );

@@ -2,7 +2,7 @@
 class DB{
     public static function activate() {
         self::createTables();
-        update_option( 'vendor', 0 );
+        update_option( 'vendor', 'standalone' );
         update_option( 'woocommerce_calc_taxes', 'yes' );
     }
 
@@ -14,8 +14,34 @@ class DB{
         self::createAtTransactionsSummary();
         self::createAtAddress();
         self::createUserData();
+        self::createTaxtransaction();
     }
 
+    public static function createTaxtransaction(){
+        global $wpdb;
+        try{
+            $table = $wpdb->prefix.'avatax_tax_transaction';
+            $charset = $wpdb->get_charset_collate();
+            $charset_collate = $wpdb->get_charset_collate();
+            $sql = "CREATE TABLE IF NOT EXISTS $table (
+                 `id` int(11) NOT NULL AUTO_INCREMENT,
+                 `shipping_tax` double default 0,
+                 `order_tax` double default 0,
+                `total_tax` double default 0,
+                `order_id` int(11) NOT NULL,    
+                 `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                 `updated_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                 `deleted_at` datetime DEFAULT CURRENT_TIMESTAMP,
+                 PRIMARY KEY (`id`)
+              ) $charset_collate;";
+              require_once( ABSPATH . 'wp-admin/includes/upgrade.php' );
+              dbDelta( $sql );
+        }catch(Exception $e){
+            $message = $e->getMessage();
+            ErrorLog::errorLogs($message);
+        }  
+
+    }
     public static function createAtCompany(){
         global $wpdb;
         try{
@@ -26,7 +52,6 @@ class DB{
                  `id` int(11) NOT NULL AUTO_INCREMENT,
                  `accountId` int(11) DEFAULT NULL,
                  `companyId` int(11) DEFAULT NULL,
-                 `` varchar(255) DEFAULT NULL,
                  `name` varchar(255) DEFAULT NULL,
                  `isDefault` enum('0','1') DEFAULT NULL,
                  `isActive` enum('0','1') DEFAULT NULL,
@@ -71,6 +96,7 @@ class DB{
                   `order_id` varchar(255) DEFAULT NULL,
                   `code` varchar(255) DEFAULT NULL,
                   `companyId` int(11) DEFAULT NULL,
+                  `companyCode` varchar(255) DEFAULT NULL,
                   `date` text,
                   `status` varchar(255) DEFAULT NULL,
                   `type` varchar(255) DEFAULT NULL,
