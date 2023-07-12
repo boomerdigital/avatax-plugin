@@ -1,4 +1,6 @@
-jQuery(document).ready(function(){
+jQuery(document).ready(function($){
+
+
     jQuery(document).on("click",'#w_validate',function(){
     
         var billing_address_1= jQuery("#billing_address_1").val();
@@ -35,8 +37,8 @@ jQuery(document).ready(function(){
     
     jQuery(document).on("click",'#place_order',function( e ){
         e.preventDefault();
-        var address_validation= jQuery("#address-validate").val();
-        if(address_validation=="yes"){       
+        
+        if(ADDRESSVALIDATION=="yes"){       
         
             var billing_address_1= jQuery("#billing_address_1").val();
             var billing_address_2= jQuery("#billing_address_2").val();
@@ -68,7 +70,38 @@ jQuery(document).ready(function(){
     
     });
 
+    function SaveDataCustomer(){
+        let billing_avatax_exemption_number=jQuery("#billing_avatax_exemption_number").val();
+        let billing_avatax_customer_exempt_reason=jQuery("#billing_avatax_customer_exempt_reason").val();
+        jQuery.ajax({
+            type: "POST",
+            url: getAdminAjax(),
+            data:{ action: 'SaveDataCustomer',"billing_avatax_exemption_number":billing_avatax_exemption_number,"billing_avatax_customer_exempt_reason":billing_avatax_customer_exempt_reason, "textCase":"Upper" },
+            success:function(data){
+                var result =  JSON.parse( data );
+                 if(result.status == 'success' ){
+                    $('body').trigger('update_checkout');   
+                }else{
+                    
+                    
+                 }
+            
+    
+            }
+        });
+    
+    }
+
+    $(document).on('change',"#billing_avatax_customer_exempt_reason",function(){
+       SaveDataCustomer();
+    });
+    
+    $(document).on('blur',"#billing_avatax_exemption_number",function(){
+        SaveDataCustomer();
+     });
+
 });
+
 
 
 

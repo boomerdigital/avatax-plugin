@@ -8,6 +8,7 @@ jQuery(document).ready(function(){
         data: formData,
         success: function(msg){
             var options = "<option value='0'>All Locations</option>";
+           
             if (msg != null){
                 var loc = JSON.parse(msg);
                 for(var i = 0; i<loc.value.length; i++){
@@ -20,17 +21,24 @@ jQuery(document).ready(function(){
 
     /*Getting all countries list for country field in admin*/
     getAllCountries();
+    getCompanyList();
     updateUserAjax();
+    renderButton();
 });
 
 function getAllCountries(){
     jQuery.ajax({
         type: "GET",
         url: admin_ajax_url.ajax_url,
-        data: {action: "getCountriesList"},
+        data: {action: "getCountriesList",'_ajax_nonce':admin_ajax_url._ajax_nonce,},
         success: function(msg){
+            
             var loc = JSON.parse(msg);
-            var options = "<option value='0'>All Locations</option>";
+           
+            var options = "<option value='0'>All Locations</option>";  
+            if(loc.saved[0]==0){
+                 options = "<option selected value='0'>All Locations</option>";  
+            }          
             if (loc.all.length > 0){
                 for(var i = 0; i<loc.all.length; i++){
                     if(jQuery.inArray(loc.all[i].code,loc.saved) != -1){
@@ -48,15 +56,62 @@ function getAllCountries(){
     });
 }
 
+function getCompanyList(){
+    jQuery.ajax({
+        type: "GET",
+        url: admin_ajax_url.ajax_url,
+        data: {action: "returnCompanies",'_ajax_nonce':admin_ajax_url._ajax_nonce},
+        dataType: "json",
+        success: function(data){
+            
+            renderselect(data)
+        }
+    });
+}
+
+function renderselect(data){
+    let defaul='';	
+    let choose='';
+    var options ="<option value='0'>Select  a Company </option>";
+    
+    if (data != null){
+        
+        for(var i = 0; i<data.companies.length; i++){
+            
+            
+            if(data.companies[i].isDefault ==true){
+                defaul="(Default)";
+            }
+            if(data.companies[i].id ==data.saved){
+                choose="selected";
+            }
+            options += "<option data-id="+data.companies[i].id+" "+choose+" value='"+ data.companies[i].companyCode+"'>Code: "+data.companies[i].companyCode+ "/"+data.companies[i].name+defaul+"</option>";
+            defaul='';
+            choose='';
+        }  
+        jQuery("#companycode").html(options);
+    }
+} 
+   
 function updateUserAjax(){
     setTimeout(function(){
     jQuery.ajax({
         type: "GET",
         url: admin_ajax_url.ajax_url,
-        data: {action: "updateUserAjax"},
+        data: {action: "updateUserAjax",'_ajax_nonce':admin_ajax_url._ajax_nonce},
         success: function(msg){
 
         }
     });
    }, 50000);
+
+   
+   
 }
+
+function renderButton(){
+    let button=' <br><br> <input  id="testc" class="button-primary woocommerce-save-button" type="button" value="Test Connection">';
+    jQuery("#env").after(button);
+    let a="<a href='https://drive.google.com/file/d/1RGo7ZSb8FuCUv9eDmvwyVjFucavFjkOh/view?usp=sharing' target='_blank'>User Guide</a>";
+    jQuery("#connection-description p").after(a);
+   }
