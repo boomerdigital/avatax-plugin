@@ -101,8 +101,6 @@ class Ajax{
     function search_array($search,$source) {
         return (count(array_intersect($search, $source)) == count($search));
      }
-
-    
     function avatax_calculate_taxes( $total, $cart ) { 
        global $wpdb;
         $totalr=$total;
@@ -287,8 +285,6 @@ class Ajax{
             }else{
                 $include=false;
             }
-            
-          
             $countries=get_option('supported_countries');
             $search= array(0 , $order->get_shipping_country());
             $customer_code=get_the_author_meta( 'avatax_customer_code', $order->get_customer_id() );
@@ -300,7 +296,6 @@ class Ajax{
                 $totalproduct=$item_values->get_total();
                 $post_obj=get_post($item_values->get_product_id());
                 $address=$this->get_vendor_address($post_obj->post_author);
-            
                 $product =$item_values->get_product();
                 $regular_price = $product->get_regular_price();
                 $discount = ( (float)$regular_price * (int)$item_values->get_quantity());
@@ -446,7 +441,6 @@ class Ajax{
             $rate=array_sum($rates)*100;
             $taxNames=array_column($response->summary, 'taxName');
             $taxname=implode('-',$taxNames);
-            //$taxname=substr($taxname,0,-1);
                     //insert tax
                     $wpdb->insert($wpdb->prefix.'woocommerce_order_items',array( 
                         'order_item_name' =>$taxname,

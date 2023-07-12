@@ -81,7 +81,7 @@ class Accounts{
             }
         }catch(Exception $e){
             $message = $e->getMessage();
-         a   ErrorLog::errorLogs($message);
+            ErrorLog::errorLogs($message);
         }
     }
 
@@ -304,7 +304,7 @@ class Accounts{
                            
                         }
                         if(empty($responseData->error)){ 
-                           // $this->saveTaxRate($responseData,$region,$country);
+                           
                         }
             }catch(Exception $e){
             $message = $e->getMessage();

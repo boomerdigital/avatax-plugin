@@ -23,6 +23,7 @@ if(ENABLEAVATAX=="yes"){
       <?php
     }
   }
+  
   add_action('woocommerce_before_checkout_form', 'addressValidation', 5);
   function addressValidation() {
     $ADDRESSVALIDATION = ADDRESSVALIDATION;
