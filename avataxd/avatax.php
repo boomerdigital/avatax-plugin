@@ -1,6 +1,6 @@
 <?php
 /*
- * Plugin Name: Avatax for WooCommerce Marketplaces
+ * Plugin Name: Avalara for WooCommerce and Marketplaces
  * Plugin URI: https://boomerdigital.net/
  * Description: This Plugin is used For Calculate the Tax for WooCommerce Marketplaces, using Avatax API.
  * Requires at least: 6.2.2
