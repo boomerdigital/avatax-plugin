@@ -1,5 +1,5 @@
 
-# Avalara Avatax Plugin
+# Avalara Avatax for Marketplaces
 
   This plugin will calculate the product tax based upon the vendor’s location. Basically, plugin will interact with woocommerce and third party plugin (Dokan). The plugin’s functionality will works as per settings defined in “Custom Avatax” page menu under Admin panel.
 
